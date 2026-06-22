@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\FixedAsset;
 use App\Services\DepreciationService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class FixedAssetController extends Controller
 {
@@ -23,17 +24,32 @@ class FixedAssetController extends Controller
 
     public function store(Request $request, DepreciationService $depreciationService)
     {
+        $companyId = auth()->user()->current_company_id;
+
         $validated = $request->validate([
             'asset_code' => 'required|string|max:50',
             'name' => 'required|string|max:255',
-            'account_id' => 'required|exists:accounts,id',
-            'accumulated_depreciation_account_id' => 'required|exists:accounts,id',
-            'depreciation_expense_account_id' => 'required|exists:accounts,id',
+            'account_id' => [
+                'required',
+                Rule::exists('accounts', 'id')->where('company_id', $companyId),
+            ],
+            'accumulated_depreciation_account_id' => [
+                'required',
+                Rule::exists('accounts', 'id')->where('company_id', $companyId),
+            ],
+            'depreciation_expense_account_id' => [
+                'required',
+                Rule::exists('accounts', 'id')->where('company_id', $companyId),
+            ],
             'acquisition_date' => 'required|date',
             'acquisition_cost' => 'required|numeric|min:0',
             'useful_life_months' => 'required|integer|min:1',
-            'salvage_value' => 'numeric|min:0|default:0',
+            'depreciation_method' => 'nullable|in:straight_line,declining_balance',
+            'salvage_value' => 'nullable|numeric|min:0',
         ]);
+
+        $validated['salvage_value'] ??= 0;
+        $validated['depreciation_method'] ??= 'straight_line';
 
         $asset = FixedAsset::create($validated);
         $depreciationService->generateSchedule($asset);

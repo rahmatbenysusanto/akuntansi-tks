@@ -61,8 +61,8 @@ class ReportController extends Controller
         }
 
         if ($startPeriod && $endPeriod) {
-            // For cumulative income statement, use the end period
-            $data = $incomeStatementService->generate($endPeriod->id);
+            // Generate cumulative data across period range
+            $data = $incomeStatementService->generate($endPeriod->id, $startPeriod->id);
         }
 
         return view('reports.income-statement', compact('periods', 'selectedPeriod', 'data', 'startPeriod', 'endPeriod'));
@@ -112,35 +112,67 @@ class ReportController extends Controller
 
     public function incomeStatementPdf(Request $request, IncomeStatementService $incomeStatementService)
     {
-        $period = AccountingPeriod::findOrFail($request->period_id);
-        $data = $incomeStatementService->generate($period->id);
+        if (!$request->filled('period_id')) {
+            return redirect()->route('reports.income-statement')->with('error', 'Pilih periode terlebih dahulu.');
+        }
 
-        $pdf = Pdf::loadView('reports.pdf.income-statement', compact('period', 'data'));
-        return $pdf->download('Laba-Rugi-' . $period->label . '.pdf');
+        try {
+            $period = AccountingPeriod::findOrFail($request->period_id);
+            $data = $incomeStatementService->generate($period->id);
+
+            $pdf = Pdf::loadView('reports.pdf.income-statement', compact('period', 'data'));
+            return $pdf->download('Laba-Rugi-' . $period->label . '.pdf');
+        } catch (\Exception $e) {
+            return redirect()->route('reports.income-statement')->with('error', 'Gagal generate PDF: ' . $e->getMessage());
+        }
     }
 
     public function balanceSheetPdf(Request $request, BalanceSheetService $balanceSheetService)
     {
-        $period = AccountingPeriod::findOrFail($request->period_id);
-        $data = $balanceSheetService->generate($period->id);
+        if (!$request->filled('period_id')) {
+            return redirect()->route('reports.balance-sheet')->with('error', 'Pilih periode terlebih dahulu.');
+        }
 
-        $pdf = Pdf::loadView('reports.pdf.balance-sheet', compact('period', 'data'));
-        return $pdf->download('Neraca-' . $period->label . '.pdf');
+        try {
+            $period = AccountingPeriod::findOrFail($request->period_id);
+            $data = $balanceSheetService->generate($period->id);
+
+            $pdf = Pdf::loadView('reports.pdf.balance-sheet', compact('period', 'data'));
+            return $pdf->download('Neraca-' . $period->label . '.pdf');
+        } catch (\Exception $e) {
+            return redirect()->route('reports.balance-sheet')->with('error', 'Gagal generate PDF: ' . $e->getMessage());
+        }
     }
 
     public function incomeStatementExcel(Request $request, IncomeStatementService $incomeStatementService)
     {
-        $period = AccountingPeriod::findOrFail($request->period_id);
-        $data = $incomeStatementService->generate($period->id);
+        if (!$request->filled('period_id')) {
+            return redirect()->route('reports.income-statement')->with('error', 'Pilih periode terlebih dahulu.');
+        }
 
-        return Excel::download(new \App\Exports\IncomeStatementExport($period, $data), 'Laba-Rugi-' . $period->label . '.xlsx');
+        try {
+            $period = AccountingPeriod::findOrFail($request->period_id);
+            $data = $incomeStatementService->generate($period->id);
+
+            return Excel::download(new \App\Exports\IncomeStatementExport($period, $data), 'Laba-Rugi-' . $period->label . '.xlsx');
+        } catch (\Exception $e) {
+            return redirect()->route('reports.income-statement')->with('error', 'Gagal export Excel: ' . $e->getMessage());
+        }
     }
 
     public function balanceSheetExcel(Request $request, BalanceSheetService $balanceSheetService)
     {
-        $period = AccountingPeriod::findOrFail($request->period_id);
-        $data = $balanceSheetService->generate($period->id);
+        if (!$request->filled('period_id')) {
+            return redirect()->route('reports.balance-sheet')->with('error', 'Pilih periode terlebih dahulu.');
+        }
 
-        return Excel::download(new \App\Exports\BalanceSheetExport($period, $data), 'Neraca-' . $period->label . '.xlsx');
+        try {
+            $period = AccountingPeriod::findOrFail($request->period_id);
+            $data = $balanceSheetService->generate($period->id);
+
+            return Excel::download(new \App\Exports\BalanceSheetExport($period, $data), 'Neraca-' . $period->label . '.xlsx');
+        } catch (\Exception $e) {
+            return redirect()->route('reports.balance-sheet')->with('error', 'Gagal export Excel: ' . $e->getMessage());
+        }
     }
 }

@@ -83,23 +83,34 @@ class BalanceSheetService
             $totalDebit = $openingDebit + (float) $mutations->total_debit;
             $totalCredit = $openingCredit + (float) $mutations->total_credit;
 
-            // Balance = debit - credit for aktiva, credit - debit for kewajiban/modal
-            if ($account->normal_balance === 'debit') {
-                $balance = $totalDebit - $totalCredit;
-            } else {
-                $balance = $totalCredit - $totalDebit;
-            }
+            // Net balance = debit - credit
+            // For aktiva: normal balance is debit, so positive = asset balance
+            // For kewajiban/modal: normal balance is credit, so positive = liability/equity
+            // Contra-asset accounts (aktiva with normal_balance=credit, like accumulated depreciation):
+            //   their balance reduces total assets
+            $balance = $totalDebit - $totalCredit;
 
-            $balance = max(0, $balance);
+            // For display, store the raw net balance (can be negative for contra accounts)
+            $displayBalance = $balance;
+
+            // For total calculation:
+            // Aktiva: debit-normal accounts add to total, credit-normal (contra) subtract
+            // Kewajiban/Modal: credit-normal accounts add to total, debit-normal subtract
+            if ($account->normal_balance === 'debit') {
+                $total += $balance;
+            } else {
+                // Credit-normal accounts: positive balance adds, negative subtracts
+                // For contra-asset (acc. depreciation under aktiva), credit-normal balance > 0 reduces assets
+                $total -= $balance;
+            }
 
             $details[] = [
                 'account' => $account,
-                'balance' => $balance,
+                'balance' => max(0, abs($balance)),
+                'is_negative' => $balance < 0,
                 'debit' => $totalDebit,
                 'credit' => $totalCredit,
             ];
-
-            $total += $balance;
         }
 
         return [

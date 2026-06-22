@@ -38,10 +38,11 @@
                         @foreach($data['aktiva']['details'] as $aktiva)
                         <tr class="border-b border-gray-100 {{ $aktiva['account']->is_header ? 'bg-gray-50 font-semibold' : '' }}">
                             <td class="py-1.5 text-gray-700" style="padding-left: {{ $aktiva['account']->level * 12 }}px">
+                                @if($aktiva['is_negative'])<span class="text-gray-400">(-) </span>@endif
                                 {{ $aktiva['account']->name }}
                             </td>
-                            <td class="py-1.5 text-right font-mono w-32">
-                                {{ $aktiva['balance'] > 0 ? number_format($aktiva['balance'], 0, ',', '.') : '-' }}
+                            <td class="py-1.5 text-right font-mono w-32 {{ $aktiva['is_negative'] ? 'text-red-600' : '' }}">
+                                @if($aktiva['is_negative'])({{ number_format($aktiva['balance'], 0, ',', '.') }})@elseif($aktiva['balance'] > 0){{ number_format($aktiva['balance'], 0, ',', '.') }}@else-@endif
                             </td>
                         </tr>
                         @endforeach

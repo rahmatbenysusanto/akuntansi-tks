@@ -69,13 +69,16 @@
             document.getElementById('total-credit').textContent = c.toLocaleString('id-ID', {minimumFractionDigits:2});
             document.getElementById('balance-warning').classList.toggle('hidden', Math.abs(d-c) < 0.01);
         }
+        function getTotals() {
+            const d = Array.from(document.querySelectorAll('.debit-input')).reduce((s,e) => s+(parseFloat(e.value)||0),0);
+            const c = Array.from(document.querySelectorAll('.credit-input')).reduce((s,e) => s+(parseFloat(e.value)||0),0);
+            return { debit: d, credit: c };
+        }
         function submitForm(status) {
-            const t = parseFloat(document.getElementById('total-debit').textContent.replace(/\./g,'').replace(',','.')) || 0;
-            if(t === 0) { alert('Jurnal tidak boleh kosong.'); return; }
+            const totals = getTotals();
+            if(totals.debit === 0) { alert('Jurnal tidak boleh kosong.'); return; }
             if(status === 'posted') {
-                const d = Array.from(document.querySelectorAll('.debit-input')).reduce((s,e) => s+(parseFloat(e.value)||0),0);
-                const c = Array.from(document.querySelectorAll('.credit-input')).reduce((s,e) => s+(parseFloat(e.value)||0),0);
-                if(Math.abs(d-c) > 0.01) { alert('Total Debet harus sama dengan Total Kredit.'); return; }
+                if(Math.abs(totals.debit - totals.credit) > 0.01) { alert('Total Debet harus sama dengan Total Kredit.'); return; }
                 if(!confirm('Posting jurnal ini?')) return;
             }
             document.getElementById('status-input').value = status;

@@ -37,13 +37,20 @@ class PurchaseInvoice extends Model
 
             $period = AccountingPeriod::where('year', $this->invoice_date->year)
                 ->where('month', $this->invoice_date->month)->first();
-            if (!$period) return;
+            if (!$period) {
+                throw new \Exception('Periode akuntansi untuk ' . $this->invoice_date->format('F Y') . ' tidak ditemukan. Buat periode terlebih dahulu.');
+            }
 
             $hutangAccount = $this->vendor->apAccount ?? Account::where('code', '2.1.01.01.00')->first();
             $expenseAccount = Account::where('category', 'hpp')->where('is_header', false)->first();
             $ppnMasukan = Account::where('name', 'LIKE', '%PPN MASUKAN%')->first();
 
-            if (!$hutangAccount || !$expenseAccount) return;
+            if (!$hutangAccount) {
+                throw new \Exception('Akun Hutang Usaha tidak ditemukan. Set AP Account di data vendor atau pastikan akun dengan kode 2.1.01.01.00 ada.');
+            }
+            if (!$expenseAccount) {
+                throw new \Exception('Akun HPP tidak ditemukan.');
+            }
 
             $entry = JournalEntry::create([
                 'company_id' => $this->company_id,
@@ -66,7 +73,6 @@ class PurchaseInvoice extends Model
             }
 
             $entry->lines()->createMany($lines);
-            $entry->lines()->update(['company_id' => $this->company_id]);
             $this->update(['journal_entry_id' => $entry->id]);
         });
     }

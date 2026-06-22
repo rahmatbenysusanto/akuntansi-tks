@@ -28,10 +28,13 @@ class VendorController extends Controller
             'address' => 'nullable|string',
             'phone' => 'nullable|string|max:30',
             'npwp' => 'nullable|string|max:30',
-            'payment_term_days' => 'integer|default:30',
+            'payment_term_days' => 'nullable|integer',
             'ap_account_id' => 'nullable|exists:accounts,id',
-            'is_active' => 'boolean',
+            'is_active' => 'nullable|boolean',
         ]);
+
+        $validated['payment_term_days'] ??= 30;
+        $validated['is_active'] ??= true;
 
         Vendor::create($validated);
 
@@ -53,10 +56,13 @@ class VendorController extends Controller
             'address' => 'nullable|string',
             'phone' => 'nullable|string|max:30',
             'npwp' => 'nullable|string|max:30',
-            'payment_term_days' => 'integer|default:30',
+            'payment_term_days' => 'nullable|integer',
             'ap_account_id' => 'nullable|exists:accounts,id',
-            'is_active' => 'boolean',
+            'is_active' => 'nullable|boolean',
         ]);
+
+        $validated['payment_term_days'] ??= 30;
+        $validated['is_active'] ??= true;
 
         $vendor->update($validated);
 

@@ -9,8 +9,21 @@ use Illuminate\Support\Facades\DB;
 
 class IncomeStatementService
 {
-    public function generate(int $periodId): array
+    /**
+     * Generate income statement for a single period or range of periods.
+     */
+    public function generate(int $periodId, ?int $periodFromId = null): array
     {
+        $targetPeriodId = $periodId;
+        $periodIds = [$periodId];
+
+        // If periodFromId is provided and different, include all periods in range
+        if ($periodFromId && $periodFromId !== $periodId) {
+            $periodIds = $this->getPeriodRangeIds($periodFromId, $periodId);
+            // For range-based income statement, use the last period's opening balances
+            $targetPeriodId = $periodFromId;
+        }
+
         // Collect all income statement accounts
         $accounts = Account::where('report_type', 'income_statement')
             ->orderBy('code')
@@ -20,16 +33,18 @@ class IncomeStatementService
         // Get balances per account
         $balances = [];
         foreach ($accounts as $account) {
-            $opening = OpeningBalance::where('accounting_period_id', $periodId)
+            // Opening balance: use the starting period's opening balance
+            $opening = OpeningBalance::where('accounting_period_id', $targetPeriodId)
                 ->where('account_id', $account->id)
                 ->first();
 
             $openingDebit = (float) ($opening?->debit ?? 0);
             $openingCredit = (float) ($opening?->credit ?? 0);
 
+            // Mutations: aggregate across ALL periods in range
             $mutations = JournalEntryLine::where('account_id', $account->id)
-                ->whereHas('journalEntry', function ($q) use ($periodId) {
-                    $q->where('accounting_period_id', $periodId)
+                ->whereHas('journalEntry', function ($q) use ($periodIds) {
+                    $q->whereIn('accounting_period_id', $periodIds)
                       ->where('status', 'posted');
                 })
                 ->selectRaw('COALESCE(SUM(debit), 0) as total_debit, COALESCE(SUM(credit), 0) as total_credit')
@@ -99,18 +114,16 @@ class IncomeStatementService
         $operatingProfit = $grossProfit - $opexTotal;
 
         // Pendapatan/Biaya Lain (7.x)
-        // 7.1.x = PENDAPATAN LAIN (tambah profit), 7.2.x = BIAYA LAIN-LAIN (kurangi profit)
         $otherAccounts = $accounts->where('category', 'pendapatan_biaya_lain');
         $otherTotal = 0;
         $otherDetails = [];
         foreach ($otherAccounts as $acc) {
             $bal = $balances[$acc->id]['balance'] ?? 0;
-            // Deteksi dari kode: 7.1.x = pendapatan lain, 7.2.x = biaya lain
-            $codePrefix = substr($acc->code, 0, 4); // ambil "7.1." atau "7.2."
+            $codePrefix = substr($acc->code, 0, 4);
             if ($codePrefix === '7.1.') {
-                $otherTotal += $bal; // Pendapatan lain: TAMBAH
+                $otherTotal += $bal;
             } else {
-                $otherTotal -= $bal; // Biaya lain: KURANGI
+                $otherTotal -= $bal;
             }
             $otherDetails[] = [
                 'account' => $acc,
@@ -118,7 +131,6 @@ class IncomeStatementService
             ];
         }
 
-        // Profit Before Interest & Tax
         $profitBeforeInterestTax = $operatingProfit + $otherTotal;
 
         // Biaya Bunga (8.x)
@@ -127,14 +139,10 @@ class IncomeStatementService
         $interestDetails = [];
         foreach ($interestAccounts as $acc) {
             $bal = $balances[$acc->id]['balance'] ?? 0;
-            $interestDetails[] = [
-                'account' => $acc,
-                'balance' => $bal,
-            ];
+            $interestDetails[] = ['account' => $acc, 'balance' => $bal];
             $interestTotal += $bal;
         }
 
-        // Profit Before Tax
         $profitBeforeTax = $profitBeforeInterestTax - $interestTotal;
 
         // Pajak Penghasilan (9.x)
@@ -143,18 +151,15 @@ class IncomeStatementService
         $taxDetails = [];
         foreach ($taxAccounts as $acc) {
             $bal = $balances[$acc->id]['balance'] ?? 0;
-            $taxDetails[] = [
-                'account' => $acc,
-                'balance' => $bal,
-            ];
+            $taxDetails[] = ['account' => $acc, 'balance' => $bal];
             $taxTotal += $bal;
         }
 
-        // Net Income
         $netIncome = $profitBeforeTax - $taxTotal;
 
         return [
             'period_id' => $periodId,
+            'period_from_id' => $periodFromId,
             'revenues' => $revenueDetails,
             'total_revenue' => $revenueTotal,
             'hpp' => $hppDetails,
@@ -173,5 +178,19 @@ class IncomeStatementService
             'total_tax' => $taxTotal,
             'net_income' => $netIncome,
         ];
+    }
+
+    /**
+     * Get all period IDs in a range (inclusive).
+     */
+    private function getPeriodRangeIds(int $fromId, int $toId): array
+    {
+        $periods = \App\Models\AccountingPeriod::whereBetween('id', [$fromId, $toId])
+            ->orderBy('year')
+            ->orderBy('month')
+            ->pluck('id')
+            ->toArray();
+
+        return $periods ?: [$toId];
     }
 }

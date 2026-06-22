@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Account;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class AccountController extends Controller
 {
@@ -17,21 +17,28 @@ class AccountController extends Controller
 
     public function create()
     {
-        $parentAccounts = Account::where('is_header', true)->orWhere('level', '<', 5)->orderBy('code')->get();
+        $parentAccounts = Account::where(function ($q) {
+            $q->where('is_header', true)->orWhere('level', '<', 5);
+        })->orderBy('code')->get();
+
         return view('accounts.form', compact('parentAccounts'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'code' => 'required|string|max:20|unique:accounts,code',
+            'code' => [
+                'required', 'string', 'max:20',
+                Rule::unique('accounts', 'code')
+                    ->where('company_id', auth()->user()->current_company_id),
+            ],
             'name' => 'required|string|max:255',
-            'parent_code' => 'nullable|string|max:20|exists:accounts,code',
+            'parent_code' => 'nullable|string|max:20',
             'level' => 'required|integer|min:1|max:5',
             'category' => 'required|in:aktiva,kewajiban,modal,pendapatan,hpp,biaya_operasional,pendapatan_biaya_lain,biaya_bunga,pajak_penghasilan',
             'normal_balance' => 'required|in:debit,credit',
             'report_type' => 'required|in:balance_sheet,income_statement',
-            'is_header' => 'boolean',
+            'is_header' => 'nullable|boolean',
         ]);
 
         $validated['is_header'] = $request->boolean('is_header', false);
@@ -49,7 +56,9 @@ class AccountController extends Controller
                 ->with('error', 'Akun yang sudah dipakai transaksi tidak bisa diedit. Nonaktifkan saja.');
         }
 
-        $parentAccounts = Account::where('is_header', true)
+        $parentAccounts = Account::where(function ($q) {
+                $q->where('is_header', true)->orWhere('level', '<', 5);
+            })
             ->where('code', '!=', $account->code)
             ->orderBy('code')
             ->get();
@@ -65,15 +74,20 @@ class AccountController extends Controller
         }
 
         $validated = $request->validate([
-            'code' => 'required|string|max:20|unique:accounts,code,' . $account->id,
+            'code' => [
+                'required', 'string', 'max:20',
+                Rule::unique('accounts', 'code')
+                    ->where('company_id', auth()->user()->current_company_id)
+                    ->ignore($account->id),
+            ],
             'name' => 'required|string|max:255',
-            'parent_code' => 'nullable|string|max:20|exists:accounts,code',
+            'parent_code' => 'nullable|string|max:20',
             'level' => 'required|integer|min:1|max:5',
             'category' => 'required|in:aktiva,kewajiban,modal,pendapatan,hpp,biaya_operasional,pendapatan_biaya_lain,biaya_bunga,pajak_penghasilan',
             'normal_balance' => 'required|in:debit,credit',
             'report_type' => 'required|in:balance_sheet,income_statement',
-            'is_header' => 'boolean',
-            'is_active' => 'boolean',
+            'is_header' => 'nullable|boolean',
+            'is_active' => 'nullable|boolean',
         ]);
 
         $validated['is_header'] = $request->boolean('is_header', false);

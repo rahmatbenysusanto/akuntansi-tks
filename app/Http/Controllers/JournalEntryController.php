@@ -7,6 +7,7 @@ use App\Models\Account;
 use App\Models\JournalEntry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class JournalEntryController extends Controller
 {
@@ -51,13 +52,23 @@ class JournalEntryController extends Controller
 
     public function store(Request $request)
     {
+        $companyId = auth()->user()->current_company_id;
+
         $validated = $request->validate([
-            'accounting_period_id' => 'required|exists:accounting_periods,id',
+            'accounting_period_id' => [
+                'required',
+                Rule::exists('accounting_periods', 'id')
+                    ->where('company_id', $companyId),
+            ],
             'entry_date' => 'required|date',
             'reference_no' => 'required|string|max:50',
             'description' => 'required|string',
             'lines' => 'required|array|min:2',
-            'lines.*.account_id' => 'required|exists:accounts,id',
+            'lines.*.account_id' => [
+                'required',
+                Rule::exists('accounts', 'id')
+                    ->where('company_id', $companyId),
+            ],
             'lines.*.debit' => 'nullable|numeric|min:0',
             'lines.*.credit' => 'nullable|numeric|min:0',
             'status' => 'required|in:draft,posted',
@@ -145,13 +156,23 @@ class JournalEntryController extends Controller
             return back()->with('error', 'Tidak bisa mengedit jurnal di periode yang sudah ditutup.');
         }
 
+        $companyId = auth()->user()->current_company_id;
+
         $validated = $request->validate([
-            'accounting_period_id' => 'required|exists:accounting_periods,id',
+            'accounting_period_id' => [
+                'required',
+                Rule::exists('accounting_periods', 'id')
+                    ->where('company_id', $companyId),
+            ],
             'entry_date' => 'required|date',
             'reference_no' => 'required|string|max:50',
             'description' => 'required|string',
             'lines' => 'required|array|min:2',
-            'lines.*.account_id' => 'required|exists:accounts,id',
+            'lines.*.account_id' => [
+                'required',
+                Rule::exists('accounts', 'id')
+                    ->where('company_id', $companyId),
+            ],
             'lines.*.debit' => 'nullable|numeric|min:0',
             'lines.*.credit' => 'nullable|numeric|min:0',
             'status' => 'required|in:draft,posted',

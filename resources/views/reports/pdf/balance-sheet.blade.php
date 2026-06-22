@@ -43,8 +43,13 @@
             <tr class="bg-gray font-bold"><td colspan="2" style="padding: 5px;">AKTIVA</td></tr>
             @foreach($data['aktiva']['details'] as $a)
             <tr>
-                <td style="padding-left: {{ $a['account']->level * 8 }}px">{{ $a['account']->name }}</td>
-                <td class="text-right" width="80">{{ formatRupiah($a['balance']) }}</td>
+                <td style="padding-left: {{ $a['account']->level * 8 }}px">
+                    @if($a['is_negative'])<span style="color:#999;">(-) </span>@endif
+                    {{ $a['account']->name }}
+                </td>
+                <td class="text-right" width="80" style="{{ $a['is_negative'] ? 'color:#dc2626;' : '' }}">
+                    @if($a['is_negative'])({{ number_format($a['balance'], 0, ',', '.') }})@else{{ formatRupiah($a['balance']) }}@endif
+                </td>
             </tr>
             @endforeach
             <tr class="border-top bg-gray font-bold">

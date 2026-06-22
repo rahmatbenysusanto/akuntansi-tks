@@ -20,10 +20,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('profile', 'profile')->name('profile');
 
     // Master Data: Chart of Account
-    Route::resource('accounts', AccountController::class);
+    Route::resource('accounts', AccountController::class)->except(['show']);
 
     // Master Data: Accounting Periods
-    Route::resource('accounting-periods', AccountingPeriodController::class);
+    Route::resource('accounting-periods', AccountingPeriodController::class)->except(['create', 'edit', 'show', 'update', 'destroy']);
     Route::patch('accounting-periods/{accountingPeriod}/close', [AccountingPeriodController::class, 'close'])
         ->name('accounting-periods.close');
 
@@ -35,11 +35,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('vendors', \App\Http\Controllers\VendorController::class);
 
     // Transaksi: Jurnal Umum
-    Route::resource('journal-entries', JournalEntryController::class);
+    Route::resource('journal-entries', JournalEntryController::class)->except(['show']);
 
     // Transaksi: Sales & Purchase
-    Route::resource('sales', \App\Http\Controllers\SalesInvoiceController::class);
-    Route::resource('purchases', \App\Http\Controllers\PurchaseInvoiceController::class);
+    Route::resource('sales', \App\Http\Controllers\SalesInvoiceController::class)->only(['index', 'create', 'store']);
+    Route::resource('purchases', \App\Http\Controllers\PurchaseInvoiceController::class)->only(['index', 'create', 'store']);
 
     // AR/AP Ledger
     Route::prefix('arap')->name('arap.')->group(function () {
@@ -50,24 +50,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Aset Tetap
-    Route::resource('fixed-assets', \App\Http\Controllers\FixedAssetController::class);
+    Route::resource('fixed-assets', \App\Http\Controllers\FixedAssetController::class)->except(['edit', 'update', 'destroy']);
     Route::post('fixed-assets/post-depreciation', [\App\Http\Controllers\FixedAssetController::class, 'postDepreciation'])->name('fixed-assets.post-depreciation');
 
     // Inventory
-    Route::resource('items', \App\Http\Controllers\ItemController::class);
+    Route::resource('items', \App\Http\Controllers\ItemController::class)->except(['show', 'destroy']);
 
     // Multi-Currency
     Route::resource('exchange-rates', \App\Http\Controllers\ExchangeRateController::class)->only(['index', 'store']);
 
     // Loans
-    Route::resource('loans', \App\Http\Controllers\LoanController::class);
+    Route::resource('loans', \App\Http\Controllers\LoanController::class)->except(['edit', 'update', 'destroy']);
     Route::post('loans/{loan}/pay-installment', [\App\Http\Controllers\LoanController::class, 'payInstallment'])->name('loans.pay-installment');
 
     // Cash Advances
-    Route::resource('cash-advances', \App\Http\Controllers\CashAdvanceController::class);
+    Route::resource('cash-advances', \App\Http\Controllers\CashAdvanceController::class)->only(['index', 'create', 'store']);
 
     // Employees
-    Route::resource('employees', \App\Http\Controllers\EmployeeController::class);
+    Route::resource('employees', \App\Http\Controllers\EmployeeController::class)->except(['show']);
 
     // Tax
     Route::get('tax', [\App\Http\Controllers\TaxController::class, 'index'])->name('tax.index');

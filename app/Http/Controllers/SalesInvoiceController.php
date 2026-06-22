@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\SalesInvoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class SalesInvoiceController extends Controller
 {
@@ -25,15 +26,21 @@ class SalesInvoiceController extends Controller
 
     public function store(Request $request)
     {
+        $companyId = auth()->user()->current_company_id;
+
         $validated = $request->validate([
-            'customer_id' => 'required|exists:customers,id',
+            'customer_id' => [
+                'required',
+                Rule::exists('customers', 'id')
+                    ->where('company_id', $companyId),
+            ],
             'invoice_no' => 'required|string|max:50',
             'invoice_date' => 'required|date',
             'due_date' => 'required|date|after_or_equal:invoice_date',
             'lines' => 'required|array|min:1',
             'lines.*.description' => 'required|string',
-            'lines.*.qty' => 'integer|min:1',
-            'lines.*.unit_price' => 'numeric|min:0',
+            'lines.*.qty' => 'required|integer|min:1',
+            'lines.*.unit_price' => 'required|numeric|min:0',
             'lines.*.discount' => 'numeric|min:0',
             'lines.*.tax_rate' => 'numeric|min:0|max:100',
         ]);

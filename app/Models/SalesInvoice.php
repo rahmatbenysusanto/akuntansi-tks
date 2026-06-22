@@ -31,6 +31,7 @@ class SalesInvoice extends Model
     public function lines() { return $this->hasMany(SalesInvoiceLine::class); }
     public function customer() { return $this->belongsTo(Customer::class); }
     public function journalEntry() { return $this->belongsTo(JournalEntry::class); }
+    public function payments() { return $this->hasMany(SalesPaymentAllocation::class, 'sales_invoice_id'); }
 
     public function post(): void
     {
@@ -41,13 +42,20 @@ class SalesInvoice extends Model
             $period = AccountingPeriod::where('year', $this->invoice_date->year)
                 ->where('month', $this->invoice_date->month)->first();
 
-            if (!$period) return;
+            if (!$period) {
+                throw new \Exception('Periode akuntansi untuk ' . $this->invoice_date->format('F Y') . ' tidak ditemukan. Buat periode terlebih dahulu.');
+            }
 
             $piutangAccount = $this->customer->arAccount ?? Account::where('code', '1.1.04.01.01')->first();
             $revenueAccount = Account::where('category', 'pendapatan')->where('is_header', false)->first();
             $taxAccount = Account::where('name', 'LIKE', '%PPN KELUARAN%')->first();
 
-            if (!$piutangAccount || !$revenueAccount) return;
+            if (!$piutangAccount) {
+                throw new \Exception('Akun Piutang Usaha tidak ditemukan. Set AR Account di data customer atau pastikan akun dengan kode 1.1.04.01.01 ada.');
+            }
+            if (!$revenueAccount) {
+                throw new \Exception('Akun Pendapatan tidak ditemukan.');
+            }
 
             $entry = JournalEntry::create([
                 'company_id' => $this->company_id,
@@ -70,7 +78,6 @@ class SalesInvoice extends Model
             }
 
             $entry->lines()->createMany($lines);
-            $entry->lines()->update(['company_id' => $this->company_id]);
 
             $this->update(['journal_entry_id' => $entry->id]);
         });

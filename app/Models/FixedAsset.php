@@ -33,6 +33,8 @@ class FixedAsset extends Model
 
 class AssetDepreciationSchedule extends Model
 {
+    public $timestamps = false;
+
     protected $fillable = [
         'fixed_asset_id', 'period_no', 'schedule_date',
         'depreciation_amount', 'accumulated_amount', 'book_value',

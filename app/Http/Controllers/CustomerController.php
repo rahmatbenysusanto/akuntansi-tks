@@ -28,11 +28,16 @@ class CustomerController extends Controller
             'address' => 'nullable|string',
             'phone' => 'nullable|string|max:30',
             'npwp' => 'nullable|string|max:30',
-            'payment_term_days' => 'integer|default:30',
-            'credit_limit' => 'numeric|min:0|default:0',
+            'payment_term_days' => 'nullable|integer',
+            'credit_limit' => 'nullable|numeric|min:0',
             'ar_account_id' => 'nullable|exists:accounts,id',
-            'is_active' => 'boolean',
+            'is_active' => 'nullable|boolean',
         ]);
+
+        // Set default values for optional fields
+        $validated['payment_term_days'] ??= 30;
+        $validated['credit_limit'] ??= 0;
+        $validated['is_active'] ??= true;
 
         Customer::create($validated);
 
@@ -54,11 +59,16 @@ class CustomerController extends Controller
             'address' => 'nullable|string',
             'phone' => 'nullable|string|max:30',
             'npwp' => 'nullable|string|max:30',
-            'payment_term_days' => 'integer|default:30',
-            'credit_limit' => 'numeric|min:0|default:0',
+            'payment_term_days' => 'nullable|integer',
+            'credit_limit' => 'nullable|numeric|min:0',
             'ar_account_id' => 'nullable|exists:accounts,id',
-            'is_active' => 'boolean',
+            'is_active' => 'nullable|boolean',
         ]);
+
+        // Set default values for optional fields
+        $validated['payment_term_days'] ??= 30;
+        $validated['credit_limit'] ??= 0;
+        $validated['is_active'] ??= true;
 
         $customer->update($validated);
 

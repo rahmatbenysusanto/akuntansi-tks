@@ -24,13 +24,6 @@ class JournalEntry extends Model
             }
         });
 
-        static::created(function ($entry) {
-            // Propagate company_id ke lines
-            if ($entry->company_id) {
-                $entry->lines()->update(['company_id' => $entry->company_id]);
-            }
-        });
-
         static::saving(function ($entry) {
             if (auth()->check()) {
                 $entry->updated_by = auth()->id();
