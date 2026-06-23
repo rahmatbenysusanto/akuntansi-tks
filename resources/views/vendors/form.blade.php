@@ -2,7 +2,7 @@
     <x-slot name="header">{{ isset($vendor) ? 'Edit Vendor' : 'Tambah Vendor' }}</x-slot>
 
     <div class="max-w-2xl bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-        <form action="{{ isset($vendor) ? route('vendors.update', $vendor) : route('vendors.store') }}" method="POST">
+        <form action="{{ isset($vendor) ? route('vendors.update', $vendor) : route('vendors.store') }}" method="POST" data-confirm="Yakin ingin menyimpan data vendor ini?">
             @csrf
             @if(isset($vendor)) @method('PUT') @endif
 
@@ -29,7 +29,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1.5">Akun Hutang (AP)</label>
-                    <select name="ap_account_id" class="w-full rounded-lg input-modern text-sm">
+                    <select name="ap_account_id" class="w-full rounded-lg input-modern text-sm account-select">
                         <option value="">-- Default --</option>
                         @foreach($accounts as $a)
                             <option value="{{ $a->id }}" {{ old('ap_account_id', $vendor->ap_account_id ?? '') == $a->id ? 'selected' : '' }}>{{ $a->code }} - {{ $a->name }}</option>

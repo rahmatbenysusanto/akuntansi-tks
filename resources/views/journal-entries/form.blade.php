@@ -51,15 +51,18 @@
         function addLine() {
             const tbody = document.getElementById('journal-lines-body');
             const html = `<tr class="border-b border-slate-100">
-                <td class="py-1.5 pr-2"><select name="lines[${lineIndex}][account_id]" class="w-full rounded-lg input-modern text-sm account-select" required>
+                <td class="py-1.5 pr-2"><select name="lines[${lineIndex}][account_id]" class="w-full text-sm account-select" required>
                     <option value="">-- Pilih Akun --</option>
                     @foreach($accounts as $acc)<option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>@endforeach
                 </select></td>
                 <td class="py-1.5 px-1"><input type="number" step="0.01" name="lines[${lineIndex}][debit]" value="0" class="w-full text-right rounded-lg input-modern text-sm debit-input" oninput="calculateTotals()"></td>
                 <td class="py-1.5 px-1"><input type="number" step="0.01" name="lines[${lineIndex}][credit]" value="0" class="w-full text-right rounded-lg input-modern text-sm credit-input" oninput="calculateTotals()"></td>
-                <td class="py-1.5 pl-2 text-center"><button type="button" onclick="this.closest('tr').remove(); calculateTotals();" class="text-red-400 hover:text-red-600"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button></td>
+                <td class="py-1.5 pl-2 text-center"><button type="button" onclick="removeLine(this)" class="text-red-400 hover:text-red-600"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button></td>
             </tr>`;
-            tbody.insertAdjacentHTML('beforeend', html); lineIndex++; calculateTotals();
+            tbody.insertAdjacentHTML('beforeend', html);
+            const newSelect = tbody.querySelector(`select[name="lines[${lineIndex}][account_id]"]`);
+            if (typeof $ !== 'undefined') initSelect2(newSelect);
+            lineIndex++; calculateTotals();
         }
         function calculateTotals() {
             let d = 0, c = 0;
@@ -74,17 +77,20 @@
             const c = Array.from(document.querySelectorAll('.credit-input')).reduce((s,e) => s+(parseFloat(e.value)||0),0);
             return { debit: d, credit: c };
         }
-        function submitForm(status) {
+        async function submitForm(status) {
             const totals = getTotals();
-            if(totals.debit === 0) { alert('Jurnal tidak boleh kosong.'); return; }
+            if(totals.debit === 0) { await showAlert('Jurnal tidak boleh kosong.'); return; }
             if(status === 'posted') {
-                if(Math.abs(totals.debit - totals.credit) > 0.01) { alert('Total Debet harus sama dengan Total Kredit.'); return; }
-                if(!confirm('Posting jurnal ini?')) return;
+                if(Math.abs(totals.debit - totals.credit) > 0.01) { await showAlert('Total Debet harus sama dengan Total Kredit.'); return; }
+                const ok = await showConfirm('Posting jurnal ini?', 'Konfirmasi Posting');
+                if(!ok) return;
             }
             document.getElementById('status-input').value = status;
             document.querySelector('form').submit();
         }
-        document.addEventListener('DOMContentLoaded', calculateTotals);
+        document.addEventListener('DOMContentLoaded', function() {
+            calculateTotals();
+        });
     </script>
     @endpush
 </x-app-layout>

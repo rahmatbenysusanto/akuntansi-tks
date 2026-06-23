@@ -25,7 +25,7 @@
         </div>
         <div class="flex gap-3 mt-6">
             <button type="submit" name="action" value="draft" class="px-5 py-2.5 rounded-lg text-white text-sm font-semibold bg-slate-600 hover:bg-slate-700">Simpan Draft</button>
-            <button type="submit" name="action" value="post" class="px-5 py-2.5 rounded-lg text-white text-sm font-semibold btn-primary">Posting</button>
+            <button type="button" onclick="confirmAndSubmit(this, 'Posting invoice penjualan ini?')" data-action-value="post" class="px-5 py-2.5 rounded-lg text-white text-sm font-semibold btn-primary">Posting</button>
             <a href="{{ route('sales.index') }}" class="px-5 py-2.5 rounded-lg border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 transition">Batal</a>
         </div>
     </form>

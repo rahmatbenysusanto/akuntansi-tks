@@ -1,7 +1,7 @@
 <x-app-layout>
 <x-slot name="header">{{ isset($employee) ? 'Edit Karyawan' : 'Tambah Karyawan' }}</x-slot>
 <div class="max-w-2xl bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-    <form action="{{ isset($employee) ? route('employees.update', $employee) : route('employees.store') }}" method="POST">
+    <form action="{{ isset($employee) ? route('employees.update', $employee) : route('employees.store') }}" method="POST" data-confirm="Yakin ingin menyimpan data karyawan ini?">
         @csrf @if(isset($employee)) @method('PUT') @endif
         <div class="grid grid-cols-2 gap-4">
             <div><label class="block text-sm font-medium text-slate-700 mb-1.5">NIK / No. Karyawan</label>

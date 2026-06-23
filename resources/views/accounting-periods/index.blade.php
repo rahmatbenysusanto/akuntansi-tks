@@ -5,7 +5,7 @@
         <!-- Add Period Form -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
             <h3 class="font-semibold text-gray-800 mb-3">Tambah Periode Baru</h3>
-            <form action="{{ route('accounting-periods.store') }}" method="POST" class="flex gap-3 items-end">
+            <form action="{{ route('accounting-periods.store') }}" method="POST" class="flex gap-3 items-end" data-confirm="Yakin ingin menambah periode baru?">
                 @csrf
                 <div>
                     <label class="block text-sm text-gray-600 mb-1">Bulan</label>
@@ -51,9 +51,9 @@
                             <td class="px-5 py-3">{{ $period->closed_at ? $period->closed_at->format('d/m/Y H:i') : '-' }}</td>
                             <td class="px-5 py-3">
                                 @if($period->isOpen())
-                                    <form action="{{ route('accounting-periods.close', $period) }}" method="POST" onsubmit="return confirm('Tutup periode {{ $period->label }}? Pastikan semua jurnal sudah diposting.')">
+                                    <form action="{{ route('accounting-periods.close', $period) }}" method="POST">
                                         @csrf @method('PATCH')
-                                        <button class="text-xs text-red-600 hover:underline">Tutup Periode</button>
+                                        <button type="button" onclick="confirmAndSubmit(this, 'Tutup periode {{ $period->label }}? Pastikan semua jurnal sudah diposting.')" class="text-xs text-red-600 hover:underline">Tutup Periode</button>
                                     </form>
                                 @else
                                     <span class="text-xs text-gray-400">Selesai</span>

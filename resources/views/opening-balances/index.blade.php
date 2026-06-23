@@ -18,7 +18,7 @@
 
         @if($selectedPeriod)
         <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-            <form action="{{ route('opening-balances.store') }}" method="POST">
+            <form action="{{ route('opening-balances.store') }}" method="POST" data-confirm="Yakin ingin menyimpan saldo awal?">
                 @csrf
                 <input type="hidden" name="period_id" value="{{ $selectedPeriod->id }}">
 

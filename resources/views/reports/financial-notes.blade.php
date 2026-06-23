@@ -16,6 +16,10 @@
         </div>
 
         @if($balanceData)
+        <div class="flex justify-end gap-2 mb-3">
+            <a href="{{ route('reports.financial-notes.pdf', ['period_id' => $selectedPeriod->id]) }}" class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs hover:bg-red-700">PDF</a>
+            <a href="{{ route('reports.financial-notes.excel', ['period_id' => $selectedPeriod->id]) }}" class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs hover:bg-green-700">Excel</a>
+        </div>
         <div class="space-y-6">
             <!-- 1. General Information -->
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">

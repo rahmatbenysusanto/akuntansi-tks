@@ -9,6 +9,10 @@ use App\Services\FinancialRatioService;
 use App\Services\IncomeStatementService;
 use App\Services\LedgerService;
 use App\Services\TrialBalanceService;
+use App\Exports\FinancialHighlightExport;
+use App\Exports\FinancialNotesExport;
+use App\Exports\GeneralLedgerExport;
+use App\Exports\TrialBalanceExport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -173,6 +177,138 @@ class ReportController extends Controller
             return Excel::download(new \App\Exports\BalanceSheetExport($period, $data), 'Neraca-' . $period->label . '.xlsx');
         } catch (\Exception $e) {
             return redirect()->route('reports.balance-sheet')->with('error', 'Gagal export Excel: ' . $e->getMessage());
+        }
+    }
+
+    // ========================================================================
+    // GENERAL LEDGER EXPORTS
+    // ========================================================================
+    public function generalLedgerPdf(Request $request, LedgerService $ledgerService)
+    {
+        if (!$request->filled('period_id') || !$request->filled('account_id')) {
+            return redirect()->route('reports.general-ledger')->with('error', 'Pilih periode dan akun terlebih dahulu.');
+        }
+        try {
+            $selectedPeriod = AccountingPeriod::findOrFail($request->period_id);
+            $selectedAccount = Account::findOrFail($request->account_id);
+            $data = $ledgerService->generate($selectedAccount->id, $selectedPeriod->id);
+            $pdf = Pdf::loadView('reports.pdf.general-ledger', compact('selectedPeriod', 'selectedAccount', 'data'));
+            return $pdf->download('Buku-Besar-' . $selectedAccount->code . '-' . $selectedPeriod->label . '.pdf');
+        } catch (\Exception $e) {
+            return redirect()->route('reports.general-ledger')->with('error', 'Gagal generate PDF: ' . $e->getMessage());
+        }
+    }
+
+    public function generalLedgerExcel(Request $request, LedgerService $ledgerService)
+    {
+        if (!$request->filled('period_id') || !$request->filled('account_id')) {
+            return redirect()->route('reports.general-ledger')->with('error', 'Pilih periode dan akun terlebih dahulu.');
+        }
+        try {
+            $period = AccountingPeriod::findOrFail($request->period_id);
+            $account = Account::findOrFail($request->account_id);
+            $data = $ledgerService->generate($account->id, $period->id);
+            return Excel::download(new GeneralLedgerExport($period, $account, $data), 'Buku-Besar-' . $account->code . '-' . $period->label . '.xlsx');
+        } catch (\Exception $e) {
+            return redirect()->route('reports.general-ledger')->with('error', 'Gagal export Excel: ' . $e->getMessage());
+        }
+    }
+
+    // ========================================================================
+    // TRIAL BALANCE EXPORTS
+    // ========================================================================
+    public function trialBalancePdf(Request $request, TrialBalanceService $trialBalanceService)
+    {
+        if (!$request->filled('period_id')) {
+            return redirect()->route('reports.trial-balance')->with('error', 'Pilih periode terlebih dahulu.');
+        }
+        try {
+            $selectedPeriod = AccountingPeriod::findOrFail($request->period_id);
+            $data = $trialBalanceService->generate($selectedPeriod->id);
+            $pdf = Pdf::loadView('reports.pdf.trial-balance', compact('selectedPeriod', 'data'));
+            return $pdf->download('Neraca-Lajur-' . $selectedPeriod->label . '.pdf');
+        } catch (\Exception $e) {
+            return redirect()->route('reports.trial-balance')->with('error', 'Gagal generate PDF: ' . $e->getMessage());
+        }
+    }
+
+    public function trialBalanceExcel(Request $request, TrialBalanceService $trialBalanceService)
+    {
+        if (!$request->filled('period_id')) {
+            return redirect()->route('reports.trial-balance')->with('error', 'Pilih periode terlebih dahulu.');
+        }
+        try {
+            $period = AccountingPeriod::findOrFail($request->period_id);
+            $data = $trialBalanceService->generate($period->id);
+            return Excel::download(new TrialBalanceExport($period, $data), 'Neraca-Lajur-' . $period->label . '.xlsx');
+        } catch (\Exception $e) {
+            return redirect()->route('reports.trial-balance')->with('error', 'Gagal export Excel: ' . $e->getMessage());
+        }
+    }
+
+    // ========================================================================
+    // FINANCIAL NOTES EXPORTS
+    // ========================================================================
+    public function financialNotesPdf(Request $request, BalanceSheetService $balanceSheetService, IncomeStatementService $incomeStatementService)
+    {
+        if (!$request->filled('period_id')) {
+            return redirect()->route('reports.financial-notes')->with('error', 'Pilih periode terlebih dahulu.');
+        }
+        try {
+            $selectedPeriod = AccountingPeriod::findOrFail($request->period_id);
+            $balanceData = $balanceSheetService->generate($selectedPeriod->id);
+            $incomeData = $incomeStatementService->generate($selectedPeriod->id);
+            $pdf = Pdf::loadView('reports.pdf.financial-notes', compact('selectedPeriod', 'balanceData', 'incomeData'));
+            return $pdf->download('Catatan-LK-' . $selectedPeriod->label . '.pdf');
+        } catch (\Exception $e) {
+            return redirect()->route('reports.financial-notes')->with('error', 'Gagal generate PDF: ' . $e->getMessage());
+        }
+    }
+
+    public function financialNotesExcel(Request $request, BalanceSheetService $balanceSheetService, IncomeStatementService $incomeStatementService)
+    {
+        if (!$request->filled('period_id')) {
+            return redirect()->route('reports.financial-notes')->with('error', 'Pilih periode terlebih dahulu.');
+        }
+        try {
+            $period = AccountingPeriod::findOrFail($request->period_id);
+            $balanceData = $balanceSheetService->generate($period->id);
+            $incomeData = $incomeStatementService->generate($period->id);
+            return Excel::download(new FinancialNotesExport($period, $balanceData, $incomeData), 'Catatan-LK-' . $period->label . '.xlsx');
+        } catch (\Exception $e) {
+            return redirect()->route('reports.financial-notes')->with('error', 'Gagal export Excel: ' . $e->getMessage());
+        }
+    }
+
+    // ========================================================================
+    // FINANCIAL HIGHLIGHT EXPORTS
+    // ========================================================================
+    public function financialHighlightPdf(Request $request, FinancialRatioService $ratioService)
+    {
+        if (!$request->filled('period_id')) {
+            return redirect()->route('reports.financial-highlight')->with('error', 'Pilih periode terlebih dahulu.');
+        }
+        try {
+            $selectedPeriod = AccountingPeriod::findOrFail($request->period_id);
+            $ratios = $ratioService->generate($selectedPeriod->id);
+            $pdf = Pdf::loadView('reports.pdf.financial-highlight', compact('selectedPeriod', 'ratios'));
+            return $pdf->download('Financial-Highlight-' . $selectedPeriod->label . '.pdf');
+        } catch (\Exception $e) {
+            return redirect()->route('reports.financial-highlight')->with('error', 'Gagal generate PDF: ' . $e->getMessage());
+        }
+    }
+
+    public function financialHighlightExcel(Request $request, FinancialRatioService $ratioService)
+    {
+        if (!$request->filled('period_id')) {
+            return redirect()->route('reports.financial-highlight')->with('error', 'Pilih periode terlebih dahulu.');
+        }
+        try {
+            $period = AccountingPeriod::findOrFail($request->period_id);
+            $ratios = $ratioService->generate($period->id);
+            return Excel::download(new FinancialHighlightExport($period, $ratios), 'Financial-Highlight-' . $period->label . '.xlsx');
+        } catch (\Exception $e) {
+            return redirect()->route('reports.financial-highlight')->with('error', 'Gagal export Excel: ' . $e->getMessage());
         }
     }
 }

@@ -2,7 +2,7 @@
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <div class="bg-white rounded-lg shadow-sm border p-5">
         <h3 class="font-semibold mb-3">Tambah Kurs Baru</h3>
-        <form method="POST" action="{{ route('exchange-rates.store') }}">@csrf
+        <form method="POST" action="{{ route('exchange-rates.store') }}" data-confirm="Yakin ingin menyimpan kurs ini?">@csrf
             <div class="grid grid-cols-3 gap-3">
                 <div><label class="text-sm text-gray-600">Mata Uang</label>
                     <select name="currency_code" class="w-full rounded-lg border-gray-300 text-sm">

@@ -75,13 +75,13 @@
                                 <div class="flex gap-2">
                                     @if($entry->isDraft())
                                         <a href="{{ route('journal-entries.edit', $entry) }}" class="text-xs text-blue-600 hover:underline">Edit</a>
-                                        <form action="{{ route('journal-entries.post', $entry) }}" method="POST" class="inline" onsubmit="return confirm('Posting jurnal ini?')">
+                                        <form action="{{ route('journal-entries.post', $entry) }}" method="POST" class="inline">
                                             @csrf @method('PATCH')
-                                            <button class="text-xs text-green-600 hover:underline">Posting</button>
+                                            <button type="button" onclick="confirmAndSubmit(this, 'Posting jurnal ini?')" class="text-xs text-green-600 hover:underline">Posting</button>
                                         </form>
-                                        <form action="{{ route('journal-entries.destroy', $entry) }}" method="POST" class="inline" onsubmit="return confirm('Hapus jurnal ini?')">
+                                        <form action="{{ route('journal-entries.destroy', $entry) }}" method="POST" class="inline">
                                             @csrf @method('DELETE')
-                                            <button class="text-xs text-red-600 hover:underline">Hapus</button>
+                                            <button type="button" onclick="confirmAndSubmit(this, 'Hapus jurnal ini?')" class="text-xs text-red-600 hover:underline">Hapus</button>
                                         </form>
                                     @else
                                         <a href="{{ route('journal-entries.edit', $entry) }}" class="text-xs text-gray-400">Detail</a>

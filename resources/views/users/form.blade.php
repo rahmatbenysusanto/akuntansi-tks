@@ -1,6 +1,6 @@
 <x-app-layout><x-slot name="header">{{ isset($user) ? 'Edit User' : 'Tambah User' }}</x-slot>
 <div class="max-w-lg bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-    <form action="{{ isset($user) ? route('users.update', $user) : route('users.store') }}" method="POST">@csrf @if(isset($user)) @method('PUT') @endif
+    <form action="{{ isset($user) ? route('users.update', $user) : route('users.store') }}" method="POST" data-confirm="Yakin ingin menyimpan data user ini?">@csrf @if(isset($user)) @method('PUT') @endif
         <div class="space-y-4">
             <div><label class="block text-sm font-medium text-slate-700 mb-1.5">Nama</label><input type="text" name="name" value="{{ old('name', $user->name ?? '') }}" class="w-full rounded-lg input-modern text-sm" required></div>
             <div><label class="block text-sm font-medium text-slate-700 mb-1.5">Email</label><input type="email" name="email" value="{{ old('email', $user->email ?? '') }}" class="w-full rounded-lg input-modern text-sm" required></div>

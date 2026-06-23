@@ -5,7 +5,7 @@
         <a href="{{ route('fixed-assets.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">+ Aset Baru</a>
         <form method="POST" action="{{ route('fixed-assets.post-depreciation') }}" class="inline">
             @csrf
-            <button class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700">Posting Depresiasi Bulan Ini</button>
+            <button type="button" onclick="confirmAndSubmit(this, 'Posting depresiasi bulan ini?')" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700">Posting Depresiasi Bulan Ini</button>
         </form>
     </div>
     <div class="bg-white rounded-lg shadow-sm border overflow-x-auto">

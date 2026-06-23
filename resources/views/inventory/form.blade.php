@@ -1,6 +1,6 @@
 <x-app-layout><x-slot name="header">{{ isset($item) ? 'Edit Item' : 'Tambah Item' }}</x-slot>
 <div class="max-w-2xl bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-    <form method="POST">@csrf @if(isset($item)) @method('PUT') @endif
+    <form method="POST" data-confirm="Yakin ingin menyimpan item ini?">@csrf @if(isset($item)) @method('PUT') @endif
         <div class="grid grid-cols-2 gap-4">
             <div><label class="block text-sm font-medium text-slate-700 mb-1.5">SKU</label><input type="text" name="sku" value="{{ old('sku', $item->sku ?? '') }}" class="w-full rounded-lg input-modern text-sm" required></div>
             <div><label class="block text-sm font-medium text-slate-700 mb-1.5">Nama</label><input type="text" name="name" value="{{ old('name', $item->name ?? '') }}" class="w-full rounded-lg input-modern text-sm" required></div>
@@ -12,11 +12,11 @@
         </div>
         <div class="grid grid-cols-3 gap-4 mt-4">
             <div><label class="block text-sm font-medium text-slate-700 mb-1.5">Akun Persediaan</label>
-                <select name="inventory_account_id" class="w-full rounded-lg input-modern text-sm" required>@foreach($accounts as $a)<option value="{{ $a->id }}">{{ $a->code }} {{ $a->name }}</option>@endforeach</select></div>
+                <select name="inventory_account_id" class="w-full rounded-lg input-modern text-sm account-select" required>@foreach($accounts as $a)<option value="{{ $a->id }}">{{ $a->code }} {{ $a->name }}</option>@endforeach</select></div>
             <div><label class="block text-sm font-medium text-slate-700 mb-1.5">Akun COGS</label>
-                <select name="cogs_account_id" class="w-full rounded-lg input-modern text-sm" required>@foreach($accounts as $a)<option value="{{ $a->id }}">{{ $a->code }} {{ $a->name }}</option>@endforeach</select></div>
+                <select name="cogs_account_id" class="w-full rounded-lg input-modern text-sm account-select" required>@foreach($accounts as $a)<option value="{{ $a->id }}">{{ $a->code }} {{ $a->name }}</option>@endforeach</select></div>
             <div><label class="block text-sm font-medium text-slate-700 mb-1.5">Akun Sales</label>
-                <select name="sales_account_id" class="w-full rounded-lg input-modern text-sm" required>@foreach($accounts as $a)<option value="{{ $a->id }}">{{ $a->code }} {{ $a->name }}</option>@endforeach</select></div>
+                <select name="sales_account_id" class="w-full rounded-lg input-modern text-sm account-select" required>@foreach($accounts as $a)<option value="{{ $a->id }}">{{ $a->code }} {{ $a->name }}</option>@endforeach</select></div>
         </div>
         <button type="submit" class="mt-6 px-5 py-2.5 rounded-lg text-white text-sm font-semibold btn-primary">Simpan</button>
     </form>

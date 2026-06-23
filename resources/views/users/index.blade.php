@@ -29,9 +29,9 @@
                         <td class="px-5 py-3">
                             <a href="{{ route('users.edit', $user) }}" class="text-xs text-blue-600 hover:underline">Edit</a>
                             @if($user->id !== auth()->id())
-                            <form action="{{ route('users.destroy', $user) }}" method="POST" class="inline ml-2" onsubmit="return confirm('Hapus user ini?')">
+                            <form action="{{ route('users.destroy', $user) }}" method="POST" class="inline ml-2">
                                 @csrf @method('DELETE')
-                                <button class="text-xs text-red-600 hover:underline">Hapus</button>
+                                <button type="button" onclick="confirmAndSubmit(this, 'Hapus user ini?')" class="text-xs text-red-600 hover:underline">Hapus</button>
                             </form>
                             @endif
                         </td>

@@ -24,7 +24,7 @@
                         <form method="POST" action="{{ route('loans.pay-installment', $loan) }}">
                             @csrf
                             <input type="hidden" name="schedule_id" value="{{ $s->id }}">
-                            <button class="text-xs text-blue-600 hover:underline">Bayar</button>
+                            <button type="button" onclick="confirmAndSubmit(this, 'Bayar cicilan ini? Jurnal akan otomatis terbentuk.')" class="text-xs text-blue-600 hover:underline">Bayar</button>
                         </form>
                     @endif
                 </td>

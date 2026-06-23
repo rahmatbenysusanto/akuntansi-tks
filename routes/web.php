@@ -64,14 +64,33 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('loans/{loan}/pay-installment', [\App\Http\Controllers\LoanController::class, 'payInstallment'])->name('loans.pay-installment');
 
     // Cash Advances
+    Route::post('cash-advances/{cashAdvance}/settle', [\App\Http\Controllers\CashAdvanceController::class, 'settle'])
+        ->name('cash-advances.settle');
     Route::resource('cash-advances', \App\Http\Controllers\CashAdvanceController::class)->only(['index', 'create', 'store']);
 
     // Employees
     Route::resource('employees', \App\Http\Controllers\EmployeeController::class)->except(['show']);
 
+    // Setup Gaji (Employee Salaries)
+    Route::get('employee-salaries', [\App\Http\Controllers\EmployeeSalaryController::class, 'index'])->name('employee-salaries.index');
+    Route::get('employee-salaries/{employee}/edit', [\App\Http\Controllers\EmployeeSalaryController::class, 'edit'])->name('employee-salaries.edit');
+    Route::put('employee-salaries/{employee}', [\App\Http\Controllers\EmployeeSalaryController::class, 'update'])->name('employee-salaries.update');
+
+    // Payroll
+    Route::post('payroll/{payroll}/post', [\App\Http\Controllers\PayrollController::class, 'post'])->name('payroll.post');
+    Route::resource('payroll', \App\Http\Controllers\PayrollController::class)->except(['destroy']);
+
+    // Absensi (HR Module)
+    // Catatan: clock-in & clock-out harus didefinisikan SEBELUM resource agar tidak bertabrakan dengan route {attendance}
+    Route::post('attendances/clock-in', [\App\Http\Controllers\AttendanceController::class, 'clockIn'])->name('attendances.clock-in');
+    Route::post('attendances/clock-out', [\App\Http\Controllers\AttendanceController::class, 'clockOut'])->name('attendances.clock-out');
+    Route::resource('attendances', \App\Http\Controllers\AttendanceController::class)->except(['show']);
+
     // Tax
     Route::get('tax', [\App\Http\Controllers\TaxController::class, 'index'])->name('tax.index');
     Route::get('tax/ppn', [\App\Http\Controllers\TaxController::class, 'reportPpn'])->name('tax.ppn');
+    Route::get('tax/ppn/pdf', [\App\Http\Controllers\TaxController::class, 'ppnPdf'])->name('tax.ppn.pdf');
+    Route::get('tax/ppn/excel', [\App\Http\Controllers\TaxController::class, 'ppnExcel'])->name('tax.ppn.excel');
 
     Route::patch('journal-entries/{journalEntry}/post', [JournalEntryController::class, 'post'])
         ->name('journal-entries.post');
@@ -90,6 +109,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('balance-sheet/pdf', [ReportController::class, 'balanceSheetPdf'])->name('balance-sheet.pdf');
         Route::get('income-statement/excel', [ReportController::class, 'incomeStatementExcel'])->name('income-statement.excel');
         Route::get('balance-sheet/excel', [ReportController::class, 'balanceSheetExcel'])->name('balance-sheet.excel');
+
+        Route::get('general-ledger/pdf', [ReportController::class, 'generalLedgerPdf'])->name('general-ledger.pdf');
+        Route::get('general-ledger/excel', [ReportController::class, 'generalLedgerExcel'])->name('general-ledger.excel');
+        Route::get('trial-balance/pdf', [ReportController::class, 'trialBalancePdf'])->name('trial-balance.pdf');
+        Route::get('trial-balance/excel', [ReportController::class, 'trialBalanceExcel'])->name('trial-balance.excel');
+        Route::get('financial-notes/pdf', [ReportController::class, 'financialNotesPdf'])->name('financial-notes.pdf');
+        Route::get('financial-notes/excel', [ReportController::class, 'financialNotesExcel'])->name('financial-notes.excel');
+        Route::get('financial-highlight/pdf', [ReportController::class, 'financialHighlightPdf'])->name('financial-highlight.pdf');
+        Route::get('financial-highlight/excel', [ReportController::class, 'financialHighlightExcel'])->name('financial-highlight.excel');
     });
 
     // User Management (admin only)

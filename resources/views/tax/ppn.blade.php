@@ -10,6 +10,10 @@
                 @foreach(range(now()->year - 2, now()->year) as $y)<option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>@endforeach
             </select></div>
         <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">Tampilkan</button>
+        <div class="flex gap-2 ml-auto">
+            <a href="{{ route('tax.ppn.pdf', ['month' => $month, 'year' => $year]) }}" class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">PDF</a>
+            <a href="{{ route('tax.ppn.excel', ['month' => $month, 'year' => $year]) }}" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700">Excel</a>
+        </div>
     </form>
 </div>
 

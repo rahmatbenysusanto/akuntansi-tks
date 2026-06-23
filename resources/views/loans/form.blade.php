@@ -1,6 +1,6 @@
 <x-app-layout><x-slot name="header">Fasilitas Cicilan Baru</x-slot>
 <div class="max-w-2xl bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-    <form method="POST">@csrf
+    <form method="POST" data-confirm="Yakin ingin menyimpan fasilitas cicilan ini?">@csrf
         <div class="grid grid-cols-2 gap-4">
             <div><label class="block text-sm font-medium text-slate-700 mb-1.5">Nama Fasilitas</label><input type="text" name="name" class="w-full rounded-lg input-modern text-sm" required></div>
             <div><label class="block text-sm font-medium text-slate-700 mb-1.5">Tipe</label>
@@ -13,9 +13,9 @@
         </div>
         <div class="grid grid-cols-2 gap-4 mt-4">
             <div><label class="block text-sm font-medium text-slate-700 mb-1.5">Akun Hutang</label>
-                <select name="liability_account_id" class="w-full rounded-lg input-modern text-sm" required>@foreach($accounts as $a)<option value="{{ $a->id }}">{{ $a->code }} - {{ $a->name }}</option>@endforeach</select></div>
+                <select name="liability_account_id" class="w-full rounded-lg input-modern text-sm account-select" required>@foreach($accounts as $a)<option value="{{ $a->id }}">{{ $a->code }} - {{ $a->name }}</option>@endforeach</select></div>
             <div><label class="block text-sm font-medium text-slate-700 mb-1.5">Akun Bunga</label>
-                <select name="interest_expense_account_id" class="w-full rounded-lg input-modern text-sm" required>@foreach($accounts as $a)<option value="{{ $a->id }}">{{ $a->code }} - {{ $a->name }}</option>@endforeach</select></div>
+                <select name="interest_expense_account_id" class="w-full rounded-lg input-modern text-sm account-select" required>@foreach($accounts as $a)<option value="{{ $a->id }}">{{ $a->code }} - {{ $a->name }}</option>@endforeach</select></div>
         </div>
         <button type="submit" class="mt-6 px-5 py-2.5 rounded-lg text-white text-sm font-semibold btn-primary">Simpan & Generate Jadwal</button>
     </form>

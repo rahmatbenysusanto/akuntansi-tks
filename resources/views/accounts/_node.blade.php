@@ -15,9 +15,9 @@
     <span class="w-24 text-right text-xs opacity-0 group-hover:opacity-100 transition-opacity">
         <a href="{{ route('accounts.edit', $node['account']) }}" class="text-blue-600 hover:underline">Edit</a>
         @if(!$node['has_children'] && !$node['account']->is_header)
-        <form action="{{ route('accounts.destroy', $node['account']) }}" method="POST" class="inline ml-2" onsubmit="return confirm('Hapus akun ini?')">
+        <form action="{{ route('accounts.destroy', $node['account']) }}" method="POST" class="inline ml-2">
             @csrf @method('DELETE')
-            <button class="text-red-600 hover:underline">Hapus</button>
+            <button type="button" onclick="confirmAndSubmit(this, 'Hapus akun ini?')" class="text-red-600 hover:underline">Hapus</button>
         </form>
         @endif
     </span>

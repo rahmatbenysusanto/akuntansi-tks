@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">{{ isset($account) ? 'Edit Akun' : 'Tambah Akun' }}</x-slot>
     <div class="max-w-2xl bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-        <form action="{{ isset($account) ? route('accounts.update', $account) : route('accounts.store') }}" method="POST">
+        <form action="{{ isset($account) ? route('accounts.update', $account) : route('accounts.store') }}" method="POST" data-confirm="Yakin ingin menyimpan akun ini?">
             @csrf @if(isset($account)) @method('PUT') @endif
             <div class="grid grid-cols-2 gap-4">
                 <div><label class="block text-sm font-medium text-slate-700 mb-1.5">Kode Akun</label><input type="text" name="code" value="{{ old('code', $account->code ?? '') }}" class="w-full rounded-lg input-modern text-sm" required pattern="[0-9.]+" placeholder="1.1.01.01.01"></div>
@@ -10,7 +10,7 @@
             <div class="mt-4"><label class="block text-sm font-medium text-slate-700 mb-1.5">Nama Akun</label><input type="text" name="name" value="{{ old('name', $account->name ?? '') }}" class="w-full rounded-lg input-modern text-sm" required></div>
             <div class="grid grid-cols-2 gap-4 mt-4">
                 <div><label class="block text-sm font-medium text-slate-700 mb-1.5">Induk Akun</label>
-                    <select name="parent_code" class="w-full rounded-lg input-modern text-sm">
+                    <select name="parent_code" class="w-full rounded-lg input-modern text-sm account-select">
                         <option value="">-- Tidak Ada --</option>
                         @foreach($parentAccounts as $p)<option value="{{ $p->code }}" {{ old('parent_code', $account->parent_code ?? '') == $p->code ? 'selected' : '' }}>{{ $p->code }} - {{ $p->name }}</option>@endforeach
                     </select></div>

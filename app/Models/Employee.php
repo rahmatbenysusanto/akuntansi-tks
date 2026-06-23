@@ -8,25 +8,23 @@ use Illuminate\Database\Eloquent\Model;
 class Employee extends Model
 {
     use TenantScoped;
-    protected $fillable = ['company_id','employee_no','name','department','position','bank_account_no','is_active'];
-}
 
-class CashAdvance extends Model
-{
-    use TenantScoped;
-    protected $fillable = ['company_id','employee_id','advance_no','advance_date','amount','reason','account_id','settlement_method','status','journal_entry_id'];
+    protected $fillable = [
+        'company_id', 'employee_no', 'name', 'department', 'position', 'bank_account_no', 'is_active',
+    ];
 
-    protected function casts(): array
+    public function salary()
     {
-        return ['advance_date' => 'date', 'amount' => 'decimal:2'];
+        return $this->hasOne(EmployeeSalary::class);
     }
 
-    public function employee() { return $this->belongsTo(Employee::class); }
-    public function settlements() { return $this->hasMany(CashAdvanceSettlement::class); }
-}
+    public function cashAdvances()
+    {
+        return $this->hasMany(CashAdvance::class);
+    }
 
-class CashAdvanceSettlement extends Model
-{
-    protected $fillable = ['cash_advance_id','settlement_date','amount','method','journal_entry_id'];
-    public $timestamps = false;
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
+    }
 }

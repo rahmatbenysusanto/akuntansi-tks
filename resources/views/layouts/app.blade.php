@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:300,400,500,600,700&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
         [x-cloak] { display: none !important; }
         .scrollbar-thin::-webkit-scrollbar { width: 6px; }
@@ -50,23 +51,27 @@
         <nav class="px-3 py-4 space-y-0.5 text-sm sidebar-nav" style="overflow-y: scroll; height: calc(100vh - 128px);">
             <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Dashboard</x-nav-link>
             <div class="text-[10px] uppercase tracking-widest text-indigo-300/50 font-semibold px-3 pt-5 pb-1.5">Master Data</div>
-            <x-nav-link :href="route('customers.index')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Customer</x-nav-link>
-            <x-nav-link :href="route('vendors.index')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>Vendor</x-nav-link>
+            <x-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Customer</x-nav-link>
+            <x-nav-link :href="route('vendors.index')" :active="request()->routeIs('vendors.*')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>Vendor</x-nav-link>
             <x-nav-link :href="route('accounts.index')" :active="request()->routeIs('accounts.*')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>Chart of Account</x-nav-link>
             <x-nav-link :href="route('accounting-periods.index')" :active="request()->routeIs('accounting-periods.*')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>Periode Akuntansi</x-nav-link>
             <x-nav-link :href="route('opening-balances.index')" :active="request()->routeIs('opening-balances.*')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Saldo Awal</x-nav-link>
             <div class="text-[10px] uppercase tracking-widest text-indigo-300/50 font-semibold px-3 pt-5 pb-1.5">Transaksi</div>
-            <x-nav-link :href="route('journal-entries.index')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>Jurnal Umum</x-nav-link>
-            <x-nav-link :href="route('sales.index')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Sales Invoice</x-nav-link>
-            <x-nav-link :href="route('purchases.index')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>Purchase Invoice</x-nav-link>
-            <div class="text-[10px] uppercase tracking-widest text-indigo-300/50 font-semibold px-3 pt-5 pb-1.5">Lainnya</div>
-            <x-nav-link :href="route('fixed-assets.index')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>Aset Tetap</x-nav-link>
-            <x-nav-link :href="route('arap.kartu-piutang')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Kartu Piutang</x-nav-link>
-            <x-nav-link :href="route('arap.kartu-hutang')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2"/></svg>Kartu Hutang</x-nav-link>
-            <x-nav-link :href="route('items.index')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>Inventory</x-nav-link>
-            <x-nav-link :href="route('loans.index')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>Cicilan</x-nav-link>
-            <x-nav-link :href="route('employees.index')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>Data Karyawan</x-nav-link>
-            <x-nav-link :href="route('cash-advances.index')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2"/></svg>Kasbon</x-nav-link>
+            <x-nav-link :href="route('journal-entries.index')" :active="request()->routeIs('journal-entries.*')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>Jurnal Umum</x-nav-link>
+            <x-nav-link :href="route('sales.index')" :active="request()->routeIs('sales.*')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Sales Invoice</x-nav-link>
+            <x-nav-link :href="route('purchases.index')" :active="request()->routeIs('purchases.*')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>Purchase Invoice</x-nav-link>
+            <div class="text-[10px] uppercase tracking-widest text-indigo-300/50 font-semibold px-3 pt-5 pb-1.5">Operasional</div>
+            <x-nav-link :href="route('fixed-assets.index')" :active="request()->routeIs('fixed-assets.*')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>Aset Tetap</x-nav-link>
+            <x-nav-link :href="route('arap.kartu-piutang')" :active="request()->routeIs('arap.*')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Kartu Piutang</x-nav-link>
+            <x-nav-link :href="route('arap.kartu-hutang')" :active="request()->routeIs('arap.*')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2"/></svg>Kartu Hutang</x-nav-link>
+            <x-nav-link :href="route('items.index')" :active="request()->routeIs('items.*')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>Inventory</x-nav-link>
+            <x-nav-link :href="route('loans.index')" :active="request()->routeIs('loans.*')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>Cicilan</x-nav-link>
+            <div class="text-[10px] uppercase tracking-widest text-indigo-300/50 font-semibold px-3 pt-5 pb-1.5">HR</div>
+            <x-nav-link :href="route('employees.index')" :active="request()->routeIs('employees.*')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>Data Karyawan</x-nav-link>
+            <x-nav-link :href="route('attendances.index')" :active="request()->routeIs('attendances.*')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>Absensi</x-nav-link>
+            <x-nav-link :href="route('employee-salaries.index')" :active="request()->routeIs('employee-salaries.*')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Setup Gaji</x-nav-link>
+            <x-nav-link :href="route('payroll.index')" :active="request()->routeIs('payroll.*')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h2M9 5a2 2 0 012-2h2a2 2 0 012 2m-4 8h2m-2-4h2m4-4h4v12a2 2 0 01-2 2H9m4-14V4"/></svg>Penggajian</x-nav-link>
+            <x-nav-link :href="route('cash-advances.index')" :active="request()->routeIs('cash-advances.*')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2"/></svg>Kasbon</x-nav-link>
             <div class="text-[10px] uppercase tracking-widest text-indigo-300/50 font-semibold px-3 pt-5 pb-1.5">Pajak</div>
             <x-nav-link :href="route('tax.index')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01"/></svg>Transaksi Pajak</x-nav-link>
             <x-nav-link :href="route('tax.ppn')" class="nav-link text-white/80 hover:text-white"><svg class="w-4 h-4 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Rekap PPN</x-nav-link>
@@ -119,6 +124,105 @@
         </main>
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <style>
+        .select2-container--default .select2-selection--single {
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            height: 38px;
+            padding: 4px 8px;
+            font-size: 0.875rem;
+            background: #fff;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 28px;
+            color: #334155;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__placeholder {
+            color: #94a3b8;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px;
+        }
+        .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+            background-color: #6366f1;
+        }
+        .select2-dropdown {
+            border-color: #e2e8f0;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        .select2-search__field {
+            border-radius: 0.375rem !important;
+            border-color: #e2e8f0 !important;
+            padding: 4px 8px !important;
+        }
+        .select2-container--default .select2-results__option {
+            font-size: 0.875rem;
+            padding: 6px 12px;
+        }
+    </style>
+    <script>
+        function initSelect2(el) {
+            if (typeof $ === 'undefined' || !$.fn.select2) return;
+            $(el).select2({
+                placeholder: '-- Cari & Pilih Akun --',
+                allowClear: true,
+                width: '100%',
+                language: {
+                    noResults: function() { return 'Akun tidak ditemukan'; },
+                    searching: function() { return 'Mencari...'; }
+                }
+            }).on('select2:open', function() {
+                document.querySelector('.select2-search__field')?.focus();
+            });
+        }
+        function removeLine(btn) {
+            const row = btn.closest('tr');
+            const sel = row.querySelector('.account-select');
+            if (sel && typeof $ !== 'undefined') $(sel).select2('destroy');
+            row.remove();
+            if (typeof calculateTotals === 'function') calculateTotals();
+        }
+        async function confirmAndSubmit(btn, message) {
+            const ok = await showConfirm(message);
+            if (ok) {
+                // Submit hidden action value if set via data-action-value
+                const actionVal = btn.getAttribute('data-action-value');
+                if (actionVal) {
+                    let input = btn.closest('form').querySelector('input[name="action"]');
+                    if (!input) {
+                        input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'action';
+                        btn.closest('form').appendChild(input);
+                    }
+                    input.value = actionVal;
+                }
+                btn.closest('form').submit();
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof $ !== 'undefined' && $.fn.select2) {
+                document.querySelectorAll('.account-select').forEach(el => initSelect2(el));
+            }
+        });
+        // Confirm before form submit for data-confirm forms
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            const msg = form.getAttribute('data-confirm');
+            if (!msg) return;
+            e.preventDefault();
+            showConfirm(msg).then(ok => {
+                if (ok) {
+                    form.removeAttribute('data-confirm');
+                    form.submit();
+                }
+            });
+        });
+    </script>
+    <x-confirm-dialog />
     @stack('scripts')
 </body>
 </html>

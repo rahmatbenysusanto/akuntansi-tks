@@ -14,7 +14,7 @@
                 </div>
                 <div>
                     <label class="block text-sm text-gray-600 mb-1">Akun</label>
-                    <select name="account_id" class="rounded-lg border-gray-300 text-sm w-64">
+                    <select name="account_id" class="rounded-lg border-gray-300 text-sm w-64 account-select">
                         <option value="">-- Pilih Akun --</option>
                         @foreach($accounts as $acc)
                             <option value="{{ $acc->id }}" {{ ($selectedAccount?->id ?? '') == $acc->id ? 'selected' : '' }}>
@@ -29,9 +29,15 @@
 
         @if($data)
         <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div class="px-5 py-4 border-b border-gray-200">
-                <h3 class="font-semibold text-gray-800">{{ $data['account']->code }} - {{ $data['account']->name }}</h3>
-                <p class="text-sm text-gray-500">Periode: {{ $selectedPeriod->label }}</p>
+            <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
+                <div>
+                    <h3 class="font-semibold text-gray-800">{{ $data['account']->code }} - {{ $data['account']->name }}</h3>
+                    <p class="text-sm text-gray-500">Periode: {{ $selectedPeriod->label }}</p>
+                </div>
+                <div class="flex gap-2">
+                    <a href="{{ route('reports.general-ledger.pdf', ['period_id' => $selectedPeriod->id, 'account_id' => $selectedAccount->id]) }}" class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs hover:bg-red-700">PDF</a>
+                    <a href="{{ route('reports.general-ledger.excel', ['period_id' => $selectedPeriod->id, 'account_id' => $selectedAccount->id]) }}" class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs hover:bg-green-700">Excel</a>
+                </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">

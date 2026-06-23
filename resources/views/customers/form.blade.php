@@ -2,7 +2,7 @@
     <x-slot name="header">{{ isset($customer) ? 'Edit Customer' : 'Tambah Customer' }}</x-slot>
 
     <div class="max-w-2xl bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-        <form action="{{ isset($customer) ? route('customers.update', $customer) : route('customers.store') }}" method="POST">
+        <form action="{{ isset($customer) ? route('customers.update', $customer) : route('customers.store') }}" method="POST" data-confirm="Yakin ingin menyimpan data customer ini?">
             @csrf
             @if(isset($customer)) @method('PUT') @endif
 
@@ -35,7 +35,7 @@
 
             <div class="mt-4">
                 <label class="block text-sm font-medium text-slate-700 mb-1.5">Akun Piutang (AR)</label>
-                <select name="ar_account_id" class="w-full rounded-lg input-modern text-sm">
+                <select name="ar_account_id" class="w-full rounded-lg input-modern text-sm account-select">
                     <option value="">-- Default --</option>
                     @foreach($accounts as $a)
                         <option value="{{ $a->id }}" {{ old('ar_account_id', $customer->ar_account_id ?? '') == $a->id ? 'selected' : '' }}>{{ $a->code }} - {{ $a->name }}</option>
