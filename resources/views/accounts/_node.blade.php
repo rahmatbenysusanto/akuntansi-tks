@@ -1,4 +1,4 @@
-<div class="flex items-center py-1.5 px-2 rounded hover:bg-gray-50 group {{ $node['account']->is_header ? 'bg-gray-50 font-medium' : '' }} {{ !$node['account']->is_active ? 'opacity-50' : '' }}" style="padding-left: {{ 8 + ($node['account']->level - 1) * 20 }}px">
+<div class="flex items-center py-1.5 px-2 rounded hover:bg-gray-50 group {{ $node['account']->is_header ? 'bg-gray-50 font-medium' : '' }} {{ !$node['account']->is_active ? 'opacity-50' : '' }}" style="padding-left: {{ 8 + ($node['account']->level - 1) * 20 }}px" data-code="{{ $node['account']->code }}" data-code-lower="{{ strtolower($node['account']->code) }}">
     <span class="w-28 text-xs font-mono {{ $node['account']->is_header ? 'text-gray-500' : 'text-gray-400' }}">{{ $node['account']->code }}</span>
     <span class="flex-1 text-sm {{ $node['account']->is_header ? 'text-gray-800 font-semibold' : 'text-gray-700' }}">
         {{ $node['account']->name }}
