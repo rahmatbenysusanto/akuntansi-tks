@@ -58,7 +58,16 @@
                         @forelse($entries as $entry)
                         <tr class="border-b border-gray-100 hover:bg-gray-50">
                             <td class="px-4 py-3">{{ $entry->entry_date->format('d/m/Y') }}</td>
-                            <td class="px-4 py-3">{{ $entry->reference_no }}</td>
+                            <td class="px-4 py-3">
+                                @if($entry->attachments->count() > 0)
+                                    <span class="inline-flex items-center gap-1" title="{{ $entry->attachments->count() }} lampiran">
+                                        {{ $entry->reference_no }}
+                                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                                    </span>
+                                @else
+                                    {{ $entry->reference_no }}
+                                @endif
+                            </td>
                             <td class="px-4 py-3 max-w-xs truncate">{{ $entry->description }}</td>
                             <td class="px-4 py-3">{{ $entry->accountingPeriod->label }}</td>
                             <td class="px-4 py-3 text-right font-mono">

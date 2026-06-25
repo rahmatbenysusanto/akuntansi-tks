@@ -9,11 +9,20 @@ use Illuminate\Support\Facades\DB;
 
 class IncomeStatementService
 {
+    /** @var array<string, array> Request-level cache */
+    private static array $cache = [];
+
     /**
      * Generate income statement for a single period or range of periods.
      */
     public function generate(int $periodId, ?int $periodFromId = null): array
     {
+        $cacheKey = "is:{$periodId}:" . ($periodFromId ?? 'single');
+
+        if (isset(self::$cache[$cacheKey])) {
+            return self::$cache[$cacheKey];
+        }
+
         $targetPeriodId = $periodId;
         $periodIds = [$periodId];
 
@@ -30,28 +39,36 @@ class IncomeStatementService
             ->get()
             ->keyBy('id');
 
-        // Get balances per account
+        $accountIds = $accounts->pluck('id')->toArray();
+
+        // BATCH: Fetch all opening balances in ONE query
+        $openings = OpeningBalance::where('accounting_period_id', $targetPeriodId)
+            ->whereIn('account_id', $accountIds)
+            ->get()
+            ->keyBy('account_id');
+
+        // BATCH: Fetch all mutation aggregations in ONE query
+        $mutations = JournalEntryLine::whereIn('account_id', $accountIds)
+            ->whereHas('journalEntry', function ($q) use ($periodIds) {
+                $q->whereIn('accounting_period_id', $periodIds)
+                  ->where('status', 'posted');
+            })
+            ->selectRaw('account_id, COALESCE(SUM(debit), 0) as total_debit, COALESCE(SUM(credit), 0) as total_credit')
+            ->groupBy('account_id')
+            ->get()
+            ->keyBy('account_id');
+
+        // Compute balances from pre-fetched data (no extra queries)
         $balances = [];
         foreach ($accounts as $account) {
-            // Opening balance: use the starting period's opening balance
-            $opening = OpeningBalance::where('accounting_period_id', $targetPeriodId)
-                ->where('account_id', $account->id)
-                ->first();
+            $opening = $openings->get($account->id);
+            $mutation = $mutations->get($account->id);
 
             $openingDebit = (float) ($opening?->debit ?? 0);
             $openingCredit = (float) ($opening?->credit ?? 0);
 
-            // Mutations: aggregate across ALL periods in range
-            $mutations = JournalEntryLine::where('account_id', $account->id)
-                ->whereHas('journalEntry', function ($q) use ($periodIds) {
-                    $q->whereIn('accounting_period_id', $periodIds)
-                      ->where('status', 'posted');
-                })
-                ->selectRaw('COALESCE(SUM(debit), 0) as total_debit, COALESCE(SUM(credit), 0) as total_credit')
-                ->first();
-
-            $totalDebit = $openingDebit + (float) $mutations->total_debit;
-            $totalCredit = $openingCredit + (float) $mutations->total_credit;
+            $totalDebit = $openingDebit + (float) ($mutation->total_debit ?? 0);
+            $totalCredit = $openingCredit + (float) ($mutation->total_credit ?? 0);
 
             // Net balance
             if ($account->normal_balance === 'debit') {
@@ -157,7 +174,7 @@ class IncomeStatementService
 
         $netIncome = $profitBeforeTax - $taxTotal;
 
-        return [
+        $result = [
             'period_id' => $periodId,
             'period_from_id' => $periodFromId,
             'revenues' => $revenueDetails,
@@ -178,6 +195,109 @@ class IncomeStatementService
             'total_tax' => $taxTotal,
             'net_income' => $netIncome,
         ];
+
+        return self::$cache[$cacheKey] = $result;
+    }
+
+    /**
+     * Lightweight: get revenue & expense totals for multiple periods at once.
+     * Used by dashboard chart — avoids calling generate() N times.
+     *
+     * @param int[] $periodIds
+     * @return array<int, array{label: string, revenue: float, expense: float}>
+     */
+    public function batchMonthlySummary(array $periodIds): array
+    {
+        $cacheKey = 'is:batch:' . implode(',', $periodIds);
+
+        if (isset(self::$cache[$cacheKey])) {
+            return self::$cache[$cacheKey];
+        }
+
+        // Get all income statement accounts
+        $accounts = Account::where('report_type', 'income_statement')
+            ->select('id', 'code', 'category', 'normal_balance')
+            ->get();
+
+        $revenueAccountIds = $accounts->where('category', 'pendapatan')->pluck('id')->toArray();
+        $hppAccountIds = $accounts->where('category', 'hpp')->pluck('id')->toArray();
+        $opexAccountIds = $accounts->where('category', 'biaya_operasional')->pluck('id')->toArray();
+        $interestAccountIds = $accounts->where('category', 'biaya_bunga')->pluck('id')->toArray();
+        $taxAccountIds = $accounts->where('category', 'pajak_penghasilan')->pluck('id')->toArray();
+
+        $expenseAccountIds = array_merge($hppAccountIds, $opexAccountIds, $interestAccountIds, $taxAccountIds);
+        $allAccountIds = array_merge($revenueAccountIds, $expenseAccountIds);
+
+        if (empty($allAccountIds)) {
+            $result = [];
+            foreach ($periodIds as $pid) {
+                $result[$pid] = ['label' => '', 'revenue' => 0, 'expense' => 0];
+            }
+            return self::$cache[$cacheKey] = $result;
+        }
+
+        // ONE query: aggregate debit/credit per period per account group
+        $rows = JournalEntryLine::whereIn('account_id', $allAccountIds)
+            ->whereHas('journalEntry', function ($q) use ($periodIds) {
+                $q->whereIn('accounting_period_id', $periodIds)
+                  ->where('status', 'posted');
+            })
+            ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
+            ->selectRaw('journal_entries.accounting_period_id as period_id,
+                         journal_entry_lines.account_id,
+                         SUM(journal_entry_lines.debit) as total_debit,
+                         SUM(journal_entry_lines.credit) as total_credit')
+            ->groupBy('journal_entries.accounting_period_id', 'journal_entry_lines.account_id')
+            ->get();
+
+        // Index by period_id -> account_id -> {debit, credit}
+        $data = [];
+        foreach ($rows as $row) {
+            $data[$row->period_id][$row->account_id] = [
+                'debit' => (float) $row->total_debit,
+                'credit' => (float) $row->total_credit,
+            ];
+        }
+
+        // Get period labels (label is an accessor, fetch month/year and build manually)
+        $periods = \App\Models\AccountingPeriod::whereIn('id', $periodIds)
+            ->select('id', 'month', 'year')->get();
+
+        $months = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
+        $periodLabels = [];
+        foreach ($periods as $p) {
+            $periodLabels[$p->id] = $months[$p->month] . ' ' . $p->year;
+        }
+
+        $result = [];
+        foreach ($periodIds as $pid) {
+            $revenue = 0;
+            $expense = 0;
+
+            // Calculate revenue from revenue accounts
+            foreach ($revenueAccountIds as $aid) {
+                $d = $data[$pid][$aid]['debit'] ?? 0;
+                $c = $data[$pid][$aid]['credit'] ?? 0;
+                // Revenue accounts have normal_balance = credit
+                $revenue += max(0, $c - $d);
+            }
+
+            // Calculate expenses from expense accounts
+            foreach ($expenseAccountIds as $aid) {
+                $d = $data[$pid][$aid]['debit'] ?? 0;
+                $c = $data[$pid][$aid]['credit'] ?? 0;
+                // Expense accounts have normal_balance = debit
+                $expense += max(0, $d - $c);
+            }
+
+            $result[$pid] = [
+                'label' => $periodLabels[$pid] ?? '',
+                'revenue' => $revenue,
+                'expense' => $expense,
+            ];
+        }
+
+        return self::$cache[$cacheKey] = $result;
     }
 
     /**

@@ -54,7 +54,6 @@ class JournalEntry extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logAll()
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -77,6 +76,11 @@ class JournalEntry extends Model
     public function updatedBy()
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function attachments()
+    {
+        return $this->hasMany(JournalEntryAttachment::class);
     }
 
     public function scopeDraft($query)

@@ -3,16 +3,38 @@
 namespace App\Services;
 
 use App\Models\Account;
+use App\Models\JournalEntryLine;
+use Illuminate\Support\Facades\DB;
 
 class FinancialRatioService
 {
-    public function generate(int $periodId): array
-    {
-        $incomeService = app(IncomeStatementService::class);
-        $balanceService = app(BalanceSheetService::class);
+    /** @var array<string, array> Request-level cache */
+    private static array $cache = [];
 
-        $income = $incomeService->generate($periodId);
-        $balance = $balanceService->generate($periodId);
+    /**
+     * Generate financial ratios for a period.
+     * Optionally accepts pre-computed data to avoid redundant service calls.
+     *
+     * @param array|null $income Pre-computed IncomeStatementService::generate() result
+     * @param array|null $balance Pre-computed BalanceSheetService::generate() result
+     */
+    public function generate(int $periodId, ?array $income = null, ?array $balance = null): array
+    {
+        $cacheKey = "fr:{$periodId}";
+
+        if (isset(self::$cache[$cacheKey])) {
+            return self::$cache[$cacheKey];
+        }
+
+        // Use provided data or fetch from services (which have their own cache)
+        if ($income === null) {
+            $incomeService = app(IncomeStatementService::class);
+            $income = $incomeService->generate($periodId);
+        }
+        if ($balance === null) {
+            $balanceService = app(BalanceSheetService::class);
+            $balance = $balanceService->generate($periodId);
+        }
 
         $totalRevenue = $income['total_revenue'];
         $netIncome = $income['net_income'];
@@ -20,11 +42,13 @@ class FinancialRatioService
         $totalLiabilities = $balance['total_kewajiban'];
         $totalEquity = $balance['total_modal'];
 
-        // Find specific account groups for ratios
-        $aktivaLancar = $this->getTotalByCategory('aktiva', $periodId, true);
-        $kewajibanLancar = $this->getTotalByCategory('kewajiban', $periodId, true);
-        $persediaan = $this->getTotalByName('persediaan', $periodId);
-        $kasBank = $this->getTotalByName(['kas', 'bank'], $periodId);
+        // Calculate current assets & liabilities from balance data (NO extra service calls)
+        $aktivaLancar = $this->sumBalancesByCodePrefix($balance['aktiva']['details'] ?? [], '1.1.');
+        $kewajibanLancar = $this->sumBalancesByCodePrefix($balance['kewajiban']['details'] ?? [], '2.1.');
+
+        // Calculate persediaan & kas/bank from balance data (NO extra service calls)
+        $persediaan = $this->sumBalancesByNameKeyword($balance['aktiva']['details'] ?? [], 'persediaan');
+        $kasBank = $this->sumBalancesByNameKeyword($balance['aktiva']['details'] ?? [], ['kas', 'bank']);
 
         $ratios = [];
 
@@ -95,70 +119,38 @@ class FinancialRatioService
             'formula' => 'Total Kewajiban / Modal × 100%',
         ] : ['label' => 'DER', 'value' => 0, 'unit' => '%', 'formula' => 'Total Kewajiban / Modal × 100%'];
 
-        return $ratios;
+        return self::$cache[$cacheKey] = $ratios;
     }
 
-    private function getTotalByCategory(string $category, int $periodId, bool $currentOnly = false): float
+    /**
+     * Sum balances for accounts whose code starts with the given prefix.
+     */
+    private function sumBalancesByCodePrefix(array $details, string $prefix): float
     {
-        $balanceService = app(BalanceSheetService::class);
-        $balance = $balanceService->generate($periodId);
-
-        if ($category === 'aktiva') {
-            // For current assets (aktiva lancar) look at level 2 code 1.1
-            $total = 0;
-            foreach ($balance['aktiva']['details'] as $detail) {
-                if ($currentOnly) {
-                    // Only count accounts under 1.1.x.x.x (current assets)
-                    if (strpos($detail['account']->code, '1.1.') === 0) {
-                        $total += $detail['balance'];
-                    }
-                } else {
-                    $total += $detail['balance'];
-                }
+        $total = 0.0;
+        foreach ($details as $detail) {
+            if (strpos($detail['account']->code, $prefix) === 0) {
+                $total += $detail['balance'];
             }
-            return $total;
         }
-
-        if ($category === 'kewajiban') {
-            $total = 0;
-            foreach ($balance['kewajiban']['details'] as $detail) {
-                if ($currentOnly) {
-                    // Only count accounts under 2.1.x.x.x (current liabilities)
-                    if (strpos($detail['account']->code, '2.1.') === 0) {
-                        $total += $detail['balance'];
-                    }
-                } else {
-                    $total += $detail['balance'];
-                }
-            }
-            return $total;
-        }
-
-        return 0;
+        return $total;
     }
 
-    private function getTotalByName(array|string $names, int $periodId): float
+    /**
+     * Sum balances for accounts whose name contains any of the given keywords.
+     */
+    private function sumBalancesByNameKeyword(array $details, array|string $keywords): float
     {
-        $ledgerService = app(LedgerService::class);
-        $accounts = Account::where('report_type', 'balance_sheet')->get();
-        $total = 0;
-
-        $names = is_array($names) ? $names : [$names];
-
-        foreach ($accounts as $account) {
-            $match = false;
-            foreach ($names as $name) {
-                if (stripos($account->name, $name) !== false) {
-                    $match = true;
+        $keywords = is_array($keywords) ? $keywords : [$keywords];
+        $total = 0.0;
+        foreach ($details as $detail) {
+            foreach ($keywords as $kw) {
+                if (stripos($detail['account']->name, $kw) !== false) {
+                    $total += $detail['balance'];
                     break;
                 }
             }
-            if ($match) {
-                $ledger = $ledgerService->generate($account->id, $periodId);
-                $total += $ledger['ending_balance'];
-            }
         }
-
         return $total;
     }
 }

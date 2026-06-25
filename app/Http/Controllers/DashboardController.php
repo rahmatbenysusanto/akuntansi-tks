@@ -14,7 +14,6 @@ use App\Services\IncomeStatementService;
 use App\Services\FinancialRatioService;
 use App\Services\ARAPService;
 use App\Services\LedgerService;
-use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -40,6 +39,7 @@ class DashboardController extends Controller
         $ratios = [];
 
         if ($activePeriod) {
+            // Income Statement & Balance Sheet (each cached within request)
             $incomeSummary = $incomeStatementService->generate($activePeriod->id);
             $balanceSummary = $balanceSheetService->generate($activePeriod->id);
 
@@ -53,16 +53,20 @@ class DashboardController extends Controller
             $totalAssets = $balanceSummary['total_aktiva'] ?? 0;
             $totalLiabilitiesEquity = $balanceSummary['total_kewajiban_modal'] ?? 0;
 
-            // Rasio keuangan
+            // Rasio keuangan — pass pre-computed data to avoid redundant service calls
             try {
-                $ratios = $financialRatioService->generate($activePeriod->id);
+                $ratios = $financialRatioService->generate(
+                    $activePeriod->id,
+                    income: $incomeSummary,
+                    balance: $balanceSummary
+                );
             } catch (\Exception $e) {
                 $ratios = [];
             }
         }
 
         // ==========================================
-        // KAS & BANK — ambil saldo dari akun 1.1.01.x
+        // KAS & BANK — use batch query (2 queries instead of 2N)
         // ==========================================
         $cashBalance = 0;
         $cashBreakdown = [];
@@ -72,21 +76,23 @@ class DashboardController extends Controller
                   ->orWhere('code', 'LIKE', '1.1.02.%');
             })->where('is_header', false)->get();
 
-            foreach ($cashAccounts as $acc) {
-                try {
-                    $ledger = $ledgerService->generate($acc->id, $activePeriod->id);
-                    $ending = $ledger['ending_balance'] ?? 0;
+            if ($cashAccounts->isNotEmpty()) {
+                $balances = $ledgerService->batchEndingBalances(
+                    $cashAccounts->pluck('id')->toArray(),
+                    $activePeriod->id
+                );
+
+                foreach ($cashAccounts as $acc) {
+                    $ending = $balances[$acc->id] ?? 0;
                     $cashBalance += $ending;
                     $cashBreakdown[] = [
                         'account' => $acc,
                         'balance' => $ending,
                     ];
-                } catch (\Exception $e) {
-                    // skip if ledger fails
                 }
+                // Urutkan dari saldo terbesar
+                usort($cashBreakdown, fn($a, $b) => $b['balance'] <=> $a['balance']);
             }
-            // Urutkan dari saldo terbesar
-            usort($cashBreakdown, fn($a, $b) => $b['balance'] <=> $a['balance']);
         }
 
         // ==========================================
@@ -104,32 +110,30 @@ class DashboardController extends Controller
         } catch (\Exception $e) {}
 
         // ==========================================
-        // GRAFIK BULANAN — ambil 6 periode terakhir (ALL status)
+        // GRAFIK BULANAN — use lightweight batch summary (1 query, not 6× generate())
         // ==========================================
         $monthlyLabels = [];
         $monthlyRevenue = [];
         $monthlyExpense = [];
         $allPeriods = AccountingPeriod::orderBy('year', 'desc')
             ->orderBy('month', 'desc')
-            ->take(6)->get()->reverse();
+            ->take(6)->get();
 
-        foreach ($allPeriods as $p) {
-            $monthlyLabels[] = $p->label;
-            try {
-                $stmt = $incomeStatementService->generate($p->id);
-                $monthlyRevenue[] = (float)($stmt['total_revenue'] ?? 0);
-                $monthlyExpense[] = (float)(($stmt['total_hpp'] ?? 0)
-                    + ($stmt['total_operating_expenses'] ?? 0)
-                    + ($stmt['total_interest'] ?? 0)
-                    + ($stmt['total_tax'] ?? 0));
-            } catch (\Exception $e) {
-                $monthlyRevenue[] = 0;
-                $monthlyExpense[] = 0;
+        if ($allPeriods->isNotEmpty()) {
+            $periodIds = $allPeriods->pluck('id')->toArray();
+            $summaries = $incomeStatementService->batchMonthlySummary($periodIds);
+
+            $allPeriods = $allPeriods->reverse();
+            foreach ($allPeriods as $p) {
+                $summary = $summaries[$p->id] ?? null;
+                $monthlyLabels[] = $p->label;
+                $monthlyRevenue[] = $summary ? $summary['revenue'] : 0;
+                $monthlyExpense[] = $summary ? $summary['expense'] : 0;
             }
         }
 
         // ==========================================
-        // TRANSAKSI TERBARU (5 terakhir)
+        // TRANSAKSI TERBARU (5 terakhir, eager-loaded)
         // ==========================================
         $recentEntries = JournalEntry::with(['accountingPeriod', 'createdBy', 'lines'])
             ->latest()->limit(5)->get();

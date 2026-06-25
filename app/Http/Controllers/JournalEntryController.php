@@ -5,15 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\AccountingPeriod;
 use App\Models\Account;
 use App\Models\JournalEntry;
+use App\Models\JournalEntryAttachment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class JournalEntryController extends Controller
 {
     public function index(Request $request)
     {
-        $query = JournalEntry::with(['accountingPeriod', 'createdBy', 'lines']);
+        $query = JournalEntry::with(['accountingPeriod', 'createdBy', 'lines', 'attachments']);
 
         if ($request->filled('period_id')) {
             $query->where('accounting_period_id', $request->period_id);
@@ -52,6 +54,8 @@ class JournalEntryController extends Controller
 
     public function store(Request $request)
     {
+        \Log::info('JournalEntry store called', ['user' => auth()->id(), 'has_files' => $request->hasFile('attachments')]);
+
         $companyId = auth()->user()->current_company_id;
 
         $validated = $request->validate([
@@ -61,7 +65,7 @@ class JournalEntryController extends Controller
                     ->where('company_id', $companyId),
             ],
             'entry_date' => 'required|date',
-            'reference_no' => 'required|string|max:50',
+            'reference_no' => 'nullable|string|max:50',
             'description' => 'required|string',
             'lines' => 'required|array|min:2',
             'lines.*.account_id' => [
@@ -72,6 +76,8 @@ class JournalEntryController extends Controller
             'lines.*.debit' => 'nullable|numeric|min:0',
             'lines.*.credit' => 'nullable|numeric|min:0',
             'status' => 'required|in:draft,posted',
+            'attachments' => 'nullable|array',
+            'attachments.*' => 'file|mimes:png,jpg,jpeg,pdf|max:10240',
         ]);
 
         $period = AccountingPeriod::findOrFail($validated['accounting_period_id']);
@@ -122,7 +128,24 @@ class JournalEntryController extends Controller
                     'line_order' => $order++,
                 ]);
             }
+
+            // Handle file uploads
+            if (request()->hasFile('attachments')) {
+                foreach (request()->file('attachments') as $file) {
+                    $filename = uniqid('je_') . '_' . time() . '.' . $file->getClientOriginalExtension();
+                    $file->storeAs('journal-attachments', $filename, 'public');
+
+                    $entry->attachments()->create([
+                        'original_name' => $file->getClientOriginalName(),
+                        'filename' => $filename,
+                        'mime_type' => $file->getMimeType(),
+                        'size_bytes' => $file->getSize(),
+                    ]);
+                }
+            }
         });
+
+        \Log::info('JournalEntry stored', ['status' => $validated['status']]);
 
         return redirect()->route('journal-entries.index')
             ->with('success', 'Jurnal berhasil ' . ($validated['status'] === 'posted' ? 'di-posting.' : 'disimpan sebagai draft.'));
@@ -130,20 +153,13 @@ class JournalEntryController extends Controller
 
     public function edit(JournalEntry $journalEntry)
     {
-        if ($journalEntry->status === 'posted') {
-            return redirect()->route('journal-entries.index')
-                ->with('error', 'Jurnal yang sudah di-posting tidak bisa diedit.');
-        }
+        // Jika posted atau periode closed → tampilkan read-only, jangan blokir
+        $readonly = $journalEntry->status === 'posted' || $journalEntry->accountingPeriod->status === 'closed';
 
-        if ($journalEntry->accountingPeriod->status === 'closed') {
-            return redirect()->route('journal-entries.index')
-                ->with('error', 'Tidak bisa mengedit jurnal di periode yang sudah ditutup.');
-        }
-
-        $periods = AccountingPeriod::where('status', 'open')->orderBy('year', 'desc')->orderBy('month', 'desc')->get();
+        $periods = AccountingPeriod::orderBy('year', 'desc')->orderBy('month', 'desc')->get();
         $accounts = Account::where('is_header', false)->where('is_active', true)->orderBy('code')->get();
 
-        return view('journal-entries.form', compact('journalEntry', 'periods', 'accounts'));
+        return view('journal-entries.form', compact('journalEntry', 'periods', 'accounts', 'readonly'));
     }
 
     public function update(Request $request, JournalEntry $journalEntry)
@@ -165,7 +181,7 @@ class JournalEntryController extends Controller
                     ->where('company_id', $companyId),
             ],
             'entry_date' => 'required|date',
-            'reference_no' => 'required|string|max:50',
+            'reference_no' => 'nullable|string|max:50',
             'description' => 'required|string',
             'lines' => 'required|array|min:2',
             'lines.*.account_id' => [
@@ -176,6 +192,10 @@ class JournalEntryController extends Controller
             'lines.*.debit' => 'nullable|numeric|min:0',
             'lines.*.credit' => 'nullable|numeric|min:0',
             'status' => 'required|in:draft,posted',
+            'attachments' => 'nullable|array',
+            'attachments.*' => 'file|mimes:png,jpg,jpeg,pdf|max:10240',
+            'remove_attachment_ids' => 'nullable|array',
+            'remove_attachment_ids.*' => 'integer|exists:journal_entry_attachments,id',
         ]);
 
         // Validate balance
@@ -190,7 +210,7 @@ class JournalEntryController extends Controller
             return back()->with('error', 'Total debit harus sama dengan total kredit.')->withInput();
         }
 
-        DB::transaction(function () use ($journalEntry, $validated) {
+        DB::transaction(function () use ($journalEntry, $validated, $request) {
             $journalEntry->update([
                 'accounting_period_id' => $validated['accounting_period_id'],
                 'entry_date' => $validated['entry_date'],
@@ -211,6 +231,33 @@ class JournalEntryController extends Controller
                     'line_order' => $order++,
                 ]);
             }
+
+            // Remove attachments marked for deletion
+            if ($request->has('remove_attachment_ids')) {
+                $toRemove = $journalEntry->attachments()
+                    ->whereIn('id', $request->remove_attachment_ids)
+                    ->get();
+
+                foreach ($toRemove as $att) {
+                    Storage::disk('public')->delete($att->filename);
+                    $att->delete();
+                }
+            }
+
+            // Add new attachments
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    $filename = uniqid('je_') . '_' . time() . '.' . $file->getClientOriginalExtension();
+                    $file->storeAs('journal-attachments', $filename, 'public');
+
+                    $journalEntry->attachments()->create([
+                        'original_name' => $file->getClientOriginalName(),
+                        'filename' => $filename,
+                        'mime_type' => $file->getMimeType(),
+                        'size_bytes' => $file->getSize(),
+                    ]);
+                }
+            }
         });
 
         return redirect()->route('journal-entries.index')
@@ -227,6 +274,12 @@ class JournalEntryController extends Controller
             return back()->with('error', 'Tidak bisa menghapus jurnal di periode yang sudah ditutup.');
         }
 
+        // Delete attachment files from storage
+        foreach ($journalEntry->attachments as $att) {
+            Storage::disk('public')->delete($att->filename);
+        }
+
+        $journalEntry->attachments()->delete();
         $journalEntry->lines()->delete();
         $journalEntry->delete();
 
@@ -240,8 +293,12 @@ class JournalEntryController extends Controller
             $journalEntry->post();
             return redirect()->route('journal-entries.index')
                 ->with('success', 'Jurnal berhasil di-posting.');
-        } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+        } catch (\Throwable $e) {
+            \Log::error('Post journal entry failed: ' . $e->getMessage(), [
+                'entry_id' => $journalEntry->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return back()->with('error', 'Gagal posting jurnal: ' . $e->getMessage());
         }
     }
 }

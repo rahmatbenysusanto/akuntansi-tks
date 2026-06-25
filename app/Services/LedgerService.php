@@ -93,4 +93,56 @@ class LedgerService
 
         return $result;
     }
+
+    /**
+     * Batch: get ending balances for multiple accounts in a single query pair.
+     * Much faster than calling generate() per account.
+     *
+     * @param int[] $accountIds
+     * @return array<int, float> account_id => ending_balance
+     */
+    public function batchEndingBalances(array $accountIds, int $periodId): array
+    {
+        $accounts = Account::whereIn('id', $accountIds)->get()->keyBy('id');
+
+        // BATCH: opening balances
+        $openings = OpeningBalance::where('accounting_period_id', $periodId)
+            ->whereIn('account_id', $accountIds)
+            ->get()
+            ->keyBy('account_id');
+
+        // BATCH: mutation sums
+        $mutations = JournalEntryLine::whereIn('account_id', $accountIds)
+            ->whereHas('journalEntry', function ($q) use ($periodId) {
+                $q->where('accounting_period_id', $periodId)
+                  ->where('status', 'posted');
+            })
+            ->selectRaw('account_id, COALESCE(SUM(debit), 0) as total_debit, COALESCE(SUM(credit), 0) as total_credit')
+            ->groupBy('account_id')
+            ->get()
+            ->keyBy('account_id');
+
+        $result = [];
+        foreach ($accountIds as $aid) {
+            $account = $accounts->get($aid);
+            if (!$account) {
+                $result[$aid] = 0;
+                continue;
+            }
+
+            $opening = $openings->get($aid);
+            $mutation = $mutations->get($aid);
+
+            $openingDebit = (float) ($opening?->debit ?? 0);
+            $openingCredit = (float) ($opening?->credit ?? 0);
+            $totalDebit = $openingDebit + (float) ($mutation->total_debit ?? 0);
+            $totalCredit = $openingCredit + (float) ($mutation->total_credit ?? 0);
+
+            $result[$aid] = $account->normal_balance === 'debit'
+                ? $totalDebit - $totalCredit
+                : $totalCredit - $totalDebit;
+        }
+
+        return $result;
+    }
 }
