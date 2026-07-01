@@ -15,6 +15,83 @@
         </div>
         @endif
 
+        {{-- AI Journal Generator -- hanya di mode create --}}
+        @if(!isset($entry))
+        <div class="mb-6 p-5 bg-gradient-to-br from-indigo-50 via-white to-blue-50 border border-indigo-200 rounded-xl shadow-sm" id="ai-generator-section">
+            <div class="flex items-center gap-2 mb-3">
+                <div class="flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-100">
+                    <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"/>
+                    </svg>
+                </div>
+                <span class="text-sm font-semibold text-indigo-800">✨ Generate Jurnal dengan AI</span>
+                <span class="text-[11px] text-indigo-400 font-medium bg-indigo-50 px-2 py-0.5 rounded-full">DeepSeek</span>
+            </div>
+            <p class="text-xs text-slate-500 mb-3 leading-relaxed">
+                Tulis deskripsi transaksi, AI akan otomatis memilih akun COA yang sesuai.
+                <span class="text-slate-400">Contoh: <em>"Bayar listrik kantor Juni 2026 Rp 1.500.000 dari Bank Danamon"</em></span>
+            </p>
+
+            {{-- Textarea full width --}}
+            <div class="relative mb-3">
+                <textarea id="ai-prompt" rows="3"
+                    class="w-full rounded-xl border-slate-300 bg-white text-sm placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition pr-12 resize-none"
+                    placeholder="Ketik deskripsi transaksi di sini...&#10;Contoh: Bayar listrik kantor bulan Juni 2026 Rp 1.500.000 dari Bank Danamon"></textarea>
+                <button type="button" onclick="clearAiPrompt()"
+                    class="absolute right-2.5 top-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 p-1 rounded-lg transition hidden"
+                    id="clear-prompt-btn" title="Hapus">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            {{-- Generate button full width --}}
+            <button type="button" id="ai-generate-btn" onclick="generateAiJournal()"
+                class="w-full group relative overflow-hidden px-5 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-xl text-sm font-semibold hover:from-indigo-700 hover:to-indigo-800 disabled:from-indigo-400 disabled:to-indigo-400 disabled:cursor-not-allowed transition-all duration-300 shadow-md shadow-indigo-200 hover:shadow-lg hover:shadow-indigo-300 disabled:shadow-none flex items-center justify-center gap-3">
+                {{-- Default state --}}
+                <span id="ai-btn-default" class="flex items-center gap-2.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    <span class="text-base">Generate dengan AI</span>
+                </span>
+                {{-- Loading state --}}
+                <span id="ai-btn-loading" class="hidden flex items-center gap-3">
+                    <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>AI sedang menganalisis transaksi...</span>
+                    <span class="flex gap-0.5 ml-1">
+                        <span class="w-1.5 h-1.5 bg-white rounded-full animate-bounce [animation-delay:0ms]"></span>
+                        <span class="w-1.5 h-1.5 bg-white rounded-full animate-bounce [animation-delay:150ms]"></span>
+                        <span class="w-1.5 h-1.5 bg-white rounded-full animate-bounce [animation-delay:300ms]"></span>
+                    </span>
+                </span>
+            </button>
+
+            {{-- Shortcut hint --}}
+            <p class="text-center text-[11px] text-slate-400 mt-2">Tekan <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px] text-slate-500 font-mono">Enter</kbd> untuk langsung generate</p>
+
+            <div id="ai-error" class="hidden mt-3 px-4 py-2.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700"></div>
+            <div id="ai-success" class="hidden mt-3 px-4 py-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700 flex items-start gap-2.5">
+                <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <span id="ai-success-msg"></span>
+            </div>
+        </div>
+
+        {{-- Loading shimmer animation styles --}}
+        <style>
+            @keyframes ai-pulse {
+                0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.3); }
+                50% { box-shadow: 0 0 0 8px rgba(99,102,241,0); }
+            }
+            #ai-generate-btn:disabled {
+                animation: ai-pulse 1.8s ease-in-out infinite;
+            }
+            #ai-generate-btn .animate-bounce { animation-duration: 0.8s; }
+        </style>
+        @endif
+
         <form id="journal-form" action="{{ isset($entry) ? route('journal-entries.update', $entry) : route('journal-entries.store') }}" method="POST" enctype="multipart/form-data">
             @csrf @if(isset($entry)) @method('PUT') @endif
             <div class="grid grid-cols-3 gap-4">
@@ -130,6 +207,10 @@
     <script>
         let lineIndex = {{ old('lines') ? count(old('lines')) : ($entry ? $entry->lines->count() : 2) }};
 
+        // Cache account options HTML untuk dipakai addLine() dan addAiLine()
+        const accountOptionsHtml = `@foreach($accounts as $acc)<option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>@endforeach`;
+        function getAccountOptionsHtml() { return accountOptionsHtml; }
+
         // --- File upload handling ---
         const uploadedFiles = new DataTransfer();
         const removeAttachmentIds = [];
@@ -223,7 +304,7 @@
             const html = `<tr class="border-b border-slate-100">
                 <td class="py-1.5 pr-2"><select name="lines[${lineIndex}][account_id]" class="w-full text-sm account-select" required>
                     <option value="">-- Pilih Akun --</option>
-                    @foreach($accounts as $acc)<option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>@endforeach
+                    ${getAccountOptionsHtml()}
                 </select></td>
                 <td class="py-1.5 px-1"><input type="number" step="0.01" name="lines[${lineIndex}][debit]" value="0" class="w-full text-right rounded-lg input-modern text-sm debit-input" oninput="calculateTotals()"></td>
                 <td class="py-1.5 px-1"><input type="number" step="0.01" name="lines[${lineIndex}][credit]" value="0" class="w-full text-right rounded-lg input-modern text-sm credit-input" oninput="calculateTotals()"></td>
@@ -260,7 +341,228 @@
         }
         document.addEventListener('DOMContentLoaded', function() {
             calculateTotals();
+
+            // AI prompt textarea: show/hide clear button
+            const aiPrompt = document.getElementById('ai-prompt');
+            const clearBtn = document.getElementById('clear-prompt-btn');
+            if (aiPrompt && clearBtn) {
+                aiPrompt.addEventListener('input', function() {
+                    clearBtn.classList.toggle('hidden', !this.value);
+                });
+                // Allow Enter to submit (without Shift)
+                aiPrompt.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        generateAiJournal();
+                    }
+                });
+            }
         });
+
+        // ========== AI Journal Generator ==========
+
+        async function generateAiJournal() {
+            const promptEl = document.getElementById('ai-prompt');
+            const btn = document.getElementById('ai-generate-btn');
+            const btnDefault = document.getElementById('ai-btn-default');
+            const btnLoading = document.getElementById('ai-btn-loading');
+            const errorEl = document.getElementById('ai-error');
+            const successEl = document.getElementById('ai-success');
+            const successMsg = document.getElementById('ai-success-msg');
+
+            const prompt = promptEl?.value?.trim();
+            if (!prompt || prompt.length < 10) {
+                showAiError('Deskripsi transaksi terlalu pendek. Minimal 10 karakter.');
+                promptEl?.focus();
+                return;
+            }
+
+            // Show loading state
+            btn.disabled = true;
+            btnDefault.classList.add('hidden');
+            btnLoading.classList.remove('hidden');
+            btnLoading.classList.add('flex');
+            errorEl.classList.add('hidden');
+            successEl.classList.add('hidden');
+
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+                    || document.querySelector('input[name="_token"]')?.value;
+
+                const response = await fetch('{{ route('journal-entries.ai-suggest') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ prompt: prompt }),
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    showAiError(result.error || 'Gagal generate jurnal dari AI.');
+                    return;
+                }
+
+                // Populate form with AI result
+                populateFormFromAi(result.data);
+
+                // Show success
+                successMsg.textContent = '✅ Jurnal berhasil digenerate! Silakan review sebelum simpan. — Total: Debit Rp ' +
+                    formatNumber(result.data.total_debit) + ' = Kredit Rp ' + formatNumber(result.data.total_credit);
+                successEl.classList.remove('hidden');
+
+                // Highlight AI-generated fields briefly
+                highlightAiFields();
+
+                // Scroll to journal lines
+                document.getElementById('journal-lines-body')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            } catch (err) {
+                showAiError('Gagal menghubungi server: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btnDefault.classList.remove('hidden');
+                btnLoading.classList.add('hidden');
+                btnLoading.classList.remove('flex');
+            }
+        }
+
+        function populateFormFromAi(data) {
+            // Set description
+            if (data.description) {
+                const descEl = document.querySelector('textarea[name="description"]');
+                if (descEl) descEl.value = data.description;
+            }
+
+            // Set reference number
+            if (data.reference_no) {
+                const refEl = document.querySelector('input[name="reference_no"]');
+                if (refEl) refEl.value = data.reference_no;
+            }
+
+            // Set entry date if provided
+            if (data.entry_date) {
+                const dateEl = document.querySelector('input[name="entry_date"]');
+                if (dateEl) dateEl.value = data.entry_date;
+            }
+
+            // Clear existing lines & populate with AI results
+            const tbody = document.getElementById('journal-lines-body');
+            if (!tbody) return;
+
+            // Remove all existing rows
+            tbody.innerHTML = '';
+
+            // Reset lineIndex
+            lineIndex = 0;
+
+            // Add AI-generated lines
+            if (data.lines && data.lines.length > 0) {
+                data.lines.forEach((line, i) => {
+                    addAiLine(line, i);
+                    lineIndex = i + 1;
+                });
+            }
+
+            calculateTotals();
+        }
+
+        function addAiLine(line, index) {
+            const tbody = document.getElementById('journal-lines-body');
+            if (!tbody) return;
+
+            const debitVal = line.debit > 0 ? line.debit : 0;
+            const creditVal = line.credit > 0 ? line.credit : 0;
+
+            const tr = document.createElement('tr');
+            tr.className = 'border-b border-slate-100 ai-generated-row';
+            tr.innerHTML = `
+                <td class="py-1.5 pr-2">
+                    <select name="lines[${index}][account_id]" class="w-full text-sm account-select" required>
+                        <option value="">-- Pilih Akun --</option>
+                        ${getAccountOptionsHtml()}
+                    </select>
+                </td>
+                <td class="py-1.5 px-1">
+                    <input type="number" step="0.01" name="lines[${index}][debit]" value="${debitVal}" class="w-full text-right rounded-lg input-modern text-sm debit-input" oninput="calculateTotals()">
+                </td>
+                <td class="py-1.5 px-1">
+                    <input type="number" step="0.01" name="lines[${index}][credit]" value="${creditVal}" class="w-full text-right rounded-lg input-modern text-sm credit-input" oninput="calculateTotals()">
+                </td>
+                <td class="py-1.5 pl-2 text-center">
+                    <button type="button" onclick="removeLine(this)" class="text-red-400 hover:text-red-600">
+                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                </td>`;
+
+            tbody.appendChild(tr);
+
+            // Select the correct account
+            const select = tr.querySelector('select');
+            if (select && line.account_id) {
+                select.value = String(line.account_id);
+            }
+
+            // Add AI suggestion badge if explanation exists
+            if (line.explanation) {
+                const td = tr.querySelector('td');
+                const badge = document.createElement('span');
+                badge.className = 'ml-2 text-xs text-indigo-500 italic ai-explanation';
+                badge.textContent = '💡 ' + line.explanation;
+                badge.title = line.explanation;
+                td.appendChild(badge);
+            }
+        }
+
+        function showAiError(msg) {
+            const errorEl = document.getElementById('ai-error');
+            const successEl = document.getElementById('ai-success');
+            if (errorEl) {
+                errorEl.textContent = '⚠️ ' + msg;
+                errorEl.classList.remove('hidden');
+            }
+            if (successEl) successEl.classList.add('hidden');
+        }
+
+        function highlightAiFields() {
+            // Brief highlight animation on AI-populated fields
+            const fields = document.querySelectorAll('textarea[name="description"], input[name="reference_no"], input[name="entry_date"]');
+            fields.forEach(f => {
+                f.classList.add('ring-2', 'ring-indigo-300');
+                setTimeout(() => f.classList.remove('ring-2', 'ring-indigo-300'), 2000);
+            });
+
+            // Highlight rows
+            document.querySelectorAll('.ai-generated-row').forEach(row => {
+                row.classList.add('bg-indigo-50');
+                setTimeout(() => row.classList.remove('bg-indigo-50'), 3000);
+            });
+        }
+
+        function clearAiPrompt() {
+            const promptEl = document.getElementById('ai-prompt');
+            const clearBtn = document.getElementById('clear-prompt-btn');
+            const errorEl = document.getElementById('ai-error');
+            const successEl = document.getElementById('ai-success');
+            if (promptEl) promptEl.value = '';
+            if (clearBtn) clearBtn.classList.add('hidden');
+            if (errorEl) errorEl.classList.add('hidden');
+            if (successEl) successEl.classList.add('hidden');
+        }
+
+        function formatNumber(num) {
+            return Number(num).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function removeLine(btn) {
+            const tbody = document.getElementById('journal-lines-body');
+            if (tbody && tbody.children.length <= 2) return; // Minimal 2 baris
+            btn.closest('tr').remove();
+            calculateTotals();
+        }
     </script>
     @endpush
 </x-app-layout>

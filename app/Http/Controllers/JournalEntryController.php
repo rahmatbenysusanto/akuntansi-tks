@@ -6,6 +6,7 @@ use App\Models\AccountingPeriod;
 use App\Models\Account;
 use App\Models\JournalEntry;
 use App\Models\JournalEntryAttachment;
+use App\Services\AiJournalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -262,6 +263,40 @@ class JournalEntryController extends Controller
 
         return redirect()->route('journal-entries.index')
             ->with('success', 'Jurnal berhasil diperbarui.');
+    }
+
+    /**
+     * AI-powered journal entry suggestion from natural language prompt.
+     */
+    public function suggest(Request $request, AiJournalService $aiService)
+    {
+        $request->validate([
+            'prompt' => 'required|string|min:10|max:2000',
+        ]);
+
+        $companyId = auth()->user()->current_company_id;
+
+        if (!$companyId) {
+            return response()->json([
+                'success' => false,
+                'error'   => 'Tidak ada perusahaan aktif. Pilih perusahaan terlebih dahulu.',
+            ], 400);
+        }
+
+        $result = $aiService->suggest($request->prompt, $companyId);
+
+        if (!$result['success']) {
+            return response()->json([
+                'success' => false,
+                'error'   => $result['error'],
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => $result['data'],
+            'warnings' => $result['warnings'] ?? [],
+        ]);
     }
 
     public function destroy(JournalEntry $journalEntry)

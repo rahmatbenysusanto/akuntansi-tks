@@ -35,6 +35,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('vendors', \App\Http\Controllers\VendorController::class);
 
     // Transaksi: Jurnal Umum
+    Route::post('journal-entries/ai-suggest', [JournalEntryController::class, 'suggest'])
+        ->name('journal-entries.ai-suggest');
     Route::resource('journal-entries', JournalEntryController::class)->except(['show']);
 
     // Transaksi: Sales & Purchase
