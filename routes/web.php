@@ -129,6 +129,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('activity-logs', [\App\Http\Controllers\ActivityLogController::class, 'index'])
         ->name('activity-logs.index')
         ->middleware('can:admin');
+
+    // Reset Data (admin only)
+    Route::prefix('data-reset')->name('data-reset.')->middleware('can:admin')->group(function () {
+        Route::get('/', [\App\Http\Controllers\DataResetController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\DataResetController::class, 'reset'])->name('reset');
+    });
 });
 
 require __DIR__ . '/auth.php';
