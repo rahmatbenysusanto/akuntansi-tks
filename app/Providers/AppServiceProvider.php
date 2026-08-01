@@ -23,5 +23,10 @@ class AppServiceProvider extends ServiceProvider
         Blade::directive('rupiah', function ($expression) {
             return "<?php echo formatRupiah($expression); ?>";
         });
+
+        // Blade directive @canAccessMenu untuk cek akses menu
+        Blade::if('canAccessMenu', function (string $key) {
+            return auth()->check() && auth()->user()->canAccessMenu($key);
+        });
     }
 }

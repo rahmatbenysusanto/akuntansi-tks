@@ -20,19 +20,28 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        $validMenuKeys = array_keys(config('menu_permissions.menus'));
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
             'role' => 'required|in:admin,staff',
+            'menu_permissions' => 'nullable|array',
+            'menu_permissions.*' => 'string|in:' . implode(',', $validMenuKeys),
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => bcrypt($validated['password']),
             'role' => $validated['role'],
         ]);
+
+        // Sync menu permissions untuk staff
+        if ($user->role === 'staff') {
+            $user->syncMenuPermissions($request->input('menu_permissions', []));
+        }
 
         return redirect()->route('users.index')
             ->with('success', 'User berhasil ditambahkan.');
@@ -45,11 +54,15 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        $validMenuKeys = array_keys(config('menu_permissions.menus'));
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
             'role' => 'required|in:admin,staff',
+            'menu_permissions' => 'nullable|array',
+            'menu_permissions.*' => 'string|in:' . implode(',', $validMenuKeys),
         ]);
 
         $data = [
@@ -63,6 +76,13 @@ class UserController extends Controller
         }
 
         $user->update($data);
+
+        // Sync menu permissions: staff dapat akses sesuai yang dipilih, admin bersihkan
+        if ($user->role === 'staff') {
+            $user->syncMenuPermissions($request->input('menu_permissions', []));
+        } else {
+            $user->menuPermissions()->delete();
+        }
 
         return redirect()->route('users.index')
             ->with('success', 'User berhasil diperbarui.');
