@@ -82,6 +82,7 @@
                     @if($company && $company->address)
                     <div class="company-address">{{ $company->address }}</div>
                     @endif
+                    <div class="company-address">Pergudangan Tunas Daan Mogot km 19 Blok B2 No.11, Kebon Besar, Tangerang</div>
                     @if($company && $company->phone)
                     <div class="company-address">Telp: {{ $company->phone }}</div>
                     @endif
@@ -125,6 +126,14 @@
             <td class="info-value" colspan="3">{{ $request->client_phone }}</td>
         </tr>
         @endif
+        @if($request->pic_name)
+        <tr>
+            <td class="info-label">Nama PIC</td>
+            <td class="info-value">{{ $request->pic_name }}</td>
+            <td class="info-label">Telp. PIC</td>
+            <td class="info-value">{{ $request->pic_phone ?? '-' }}</td>
+        </tr>
+        @endif
         <tr>
             <td class="info-label">Jenis Kegiatan</td>
             <td class="info-value" colspan="3">
@@ -153,6 +162,38 @@
     </div>
     @endif
 
+    {{-- ── BIAYA OVERTIME ── --}}
+    @if($request->hourly_rate || $request->total_cost)
+    <div class="section-title">💰 Rincian Biaya Overtime</div>
+    <table class="info-table">
+        @if($request->hourly_rate)
+        <tr>
+            <td class="info-label">Tarif Per Jam</td>
+            <td class="info-value" colspan="3">
+                Rp {{ number_format($request->hourly_rate, 0, ',', '.') }}
+            </td>
+        </tr>
+        <tr>
+            <td class="info-label">Durasi</td>
+            <td class="info-value" colspan="3">
+                {{ $request->duration_label }}
+                @if($request->duration_hours > 0 && $request->hourly_rate)
+                    <em>(Estimasi: Rp {{ number_format($request->calculated_cost, 0, ',', '.') }})</em>
+                @endif
+            </td>
+        </tr>
+        @endif
+        @if($request->total_cost)
+        <tr>
+            <td class="info-label">Total Biaya</td>
+            <td class="info-value" colspan="3">
+                <strong>Rp {{ number_format($request->total_cost, 0, ',', '.') }}</strong>
+            </td>
+        </tr>
+        @endif
+    </table>
+    @endif
+
     {{-- ── TANDA TANGAN ── --}}
     <div class="signature-section">
         <table class="sig-table">
@@ -161,16 +202,29 @@
                 <td>
                     <div class="sig-label">Diajukan oleh,</div>
                     <div class="sig-line"></div>
-                    <div class="sig-name">{{ auth()->user()?->name ?? '(Staff Akunting)' }}</div>
-                    <div class="sig-role">Staff — {{ $company?->name ?? 'PT. Transkargo Solusindo' }}</div>
+                    <div class="sig-name">{{ auth()->user()?->name ?? '(Staff WH)' }}</div>
+                    <div class="sig-role">Staff WH — {{ $company?->name ?? 'PT. Transkargo Solusindo' }}</div>
                     <div class="sig-date">Tanggal: {{ now()->translatedFormat('d F Y') }}</div>
                 </td>
                 {{-- Pihak Client --}}
                 <td>
-                    <div class="sig-label">Disetujui oleh,</div>
+                    <div class="sig-label">Disetujui oleh (Client),</div>
                     <div class="sig-line"></div>
                     <div class="sig-name">(_______________________)</div>
                     <div class="sig-role">{{ $request->client_name }}</div>
+                    <div class="sig-date">Tanggal: _______________</div>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding-top: 30px;">
+                    {{-- Kosong, placeholder --}}
+                </td>
+                {{-- Manager Approval --}}
+                <td style="padding-top: 30px;">
+                    <div class="sig-label">Manager Approval,</div>
+                    <div class="sig-line"></div>
+                    <div class="sig-name">(_______________________)</div>
+                    <div class="sig-role">Manager — {{ $request->client_name }}</div>
                     <div class="sig-date">Tanggal: _______________</div>
                 </td>
             </tr>

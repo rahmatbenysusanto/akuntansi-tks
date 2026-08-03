@@ -16,11 +16,15 @@ class OvertimeRequest extends Model
         'client_name',
         'client_address',
         'client_phone',
+        'pic_name',
+        'pic_phone',
         'activity_type',
         'activity_description',
         'overtime_date',
         'overtime_start_time',
         'overtime_end_time',
+        'hourly_rate',
+        'total_cost',
         'description',
         'status',
         'created_by',
@@ -32,6 +36,8 @@ class OvertimeRequest extends Model
         return [
             'request_date' => 'date',
             'overtime_date' => 'date',
+            'hourly_rate' => 'decimal:2',
+            'total_cost' => 'decimal:2',
         ];
     }
 
@@ -112,5 +118,30 @@ class OvertimeRequest extends Model
             'signed' => 'Tertanda Tangan',
             default  => $this->status,
         };
+    }
+
+    /**
+     * Total biaya otomatis berdasarkan durasi × tarif per jam.
+     * Hanya sebagai referensi — actual total_cost bisa diinput manual.
+     */
+    public function getCalculatedCostAttribute(): float
+    {
+        return round($this->duration_hours * ($this->hourly_rate ?? 0), 2);
+    }
+
+    /**
+     * Format Rupiah untuk tarif per jam.
+     */
+    public function getHourlyRateFormattedAttribute(): string
+    {
+        return formatRupiah($this->hourly_rate ?? 0);
+    }
+
+    /**
+     * Format Rupiah untuk total biaya.
+     */
+    public function getTotalCostFormattedAttribute(): string
+    {
+        return formatRupiah($this->total_cost ?? 0);
     }
 }
