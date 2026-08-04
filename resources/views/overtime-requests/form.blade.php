@@ -137,28 +137,9 @@
             </div>
         </div>
 
-        {{-- Biaya Overtime --}}
-        <h3 class="text-sm font-semibold text-slate-800 mb-4 border-b border-slate-100 pb-2 mt-6">
-            💰 Biaya Overtime
-        </h3>
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1.5">Tarif Per Jam (Rp)</label>
-                <input type="number" name="hourly_rate"
-                    value="{{ old('hourly_rate', $request->hourly_rate ?? 120000) }}"
-                    class="w-full rounded-lg input-modern text-sm"
-                    placeholder="120.000" min="0" step="1000">
-                <p class="text-xs text-slate-400 mt-1">Default Rp 120.000 per jam</p>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1.5">Total Biaya (Rp)</label>
-                <input type="number" name="total_cost"
-                    value="{{ old('total_cost', $request->total_cost ?? '') }}"
-                    class="w-full rounded-lg input-modern text-sm"
-                    placeholder="Biaya total (input manual / free text)" min="0" step="1000">
-                <p class="text-xs text-slate-400 mt-1">Bisa dihitung manual atau diisi bebas</p>
-            </div>
-        </div>
+        {{-- Biaya Overtime — hidden from form, can be filled later if needed --}}
+        <input type="hidden" name="hourly_rate" value="{{ old('hourly_rate', $request->hourly_rate ?? 0) }}">
+        <input type="hidden" name="total_cost" value="{{ old('total_cost', $request->total_cost ?? 0) }}">
 
         {{-- Tombol --}}
         <div class="flex gap-3 mt-6 pt-4 border-t border-slate-100">

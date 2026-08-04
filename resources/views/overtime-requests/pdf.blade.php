@@ -202,8 +202,8 @@
                 <td>
                     <div class="sig-label">Diajukan oleh,</div>
                     <div class="sig-line"></div>
-                    <div class="sig-name">{{ auth()->user()?->name ?? '(Staff WH)' }}</div>
-                    <div class="sig-role">Staff WH — {{ $company?->name ?? 'PT. Transkargo Solusindo' }}</div>
+                    <div class="sig-name">{{ auth()->user()?->name ?? '(Admin WH)' }}</div>
+                    <div class="sig-role">Admin WH — {{ $company?->name ?? 'PT. Transkargo Solusindo' }}</div>
                     <div class="sig-date">Tanggal: {{ now()->translatedFormat('d F Y') }}</div>
                 </td>
                 {{-- Pihak Client --}}
@@ -212,19 +212,6 @@
                     <div class="sig-line"></div>
                     <div class="sig-name">(_______________________)</div>
                     <div class="sig-role">{{ $request->client_name }}</div>
-                    <div class="sig-date">Tanggal: _______________</div>
-                </td>
-            </tr>
-            <tr>
-                <td style="padding-top: 30px;">
-                    {{-- Kosong, placeholder --}}
-                </td>
-                {{-- Manager Approval --}}
-                <td style="padding-top: 30px;">
-                    <div class="sig-label">Manager Approval,</div>
-                    <div class="sig-line"></div>
-                    <div class="sig-name">(_______________________)</div>
-                    <div class="sig-role">Manager — {{ $request->client_name }}</div>
                     <div class="sig-date">Tanggal: _______________</div>
                 </td>
             </tr>
