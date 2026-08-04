@@ -202,8 +202,7 @@
                 <td>
                     <div class="sig-label">Diajukan oleh,</div>
                     <div class="sig-line"></div>
-                    <div class="sig-name">{{ auth()->user()?->name ?? '(Admin WH)' }}</div>
-                    <div class="sig-role">Admin WH — {{ $company?->name ?? 'PT. Transkargo Solusindo' }}</div>
+                    <div class="sig-name">{{ auth()->user()?->name ?? '(____________)' }}</div>
                     <div class="sig-date">Tanggal: {{ now()->translatedFormat('d F Y') }}</div>
                 </td>
                 {{-- Pihak Client --}}
